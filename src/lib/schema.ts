@@ -33,3 +33,18 @@ export const contactSubmissions = pgTable("contact_submissions", {
   createdAt: timestamp("created_at").defaultNow(),
   isRead: boolean("is_read").default(false),
 });
+
+export const pageViews = pgTable("page_views", {
+  id: serial("id").primaryKey(),
+  visitorId: text("visitor_id").notNull(),
+  pathname: text("pathname").notNull(),
+  isNewVisitor: boolean("is_new_visitor").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const toolExecutions = pgTable("tool_executions", {
+  id: serial("id").primaryKey(),
+  toolSlug: text("tool_slug").notNull(),
+  visitorId: text("visitor_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

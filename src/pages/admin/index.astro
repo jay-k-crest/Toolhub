@@ -2,8 +2,9 @@
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { getCategories, getTools } from "../../lib/data";
 import { db } from "../../lib/db";
-import { contactSubmissions } from "../../lib/schema";
-import { desc } from "drizzle-orm";
+import { contactSubmissions, pageViews, toolExecutions } from "../../lib/schema";
+import { desc, sql, gte } from "drizzle-orm";
+import AnalyticsDashboard from "../../components/admin/AnalyticsDashboard";
 
 export const prerender = false;
 
@@ -15,15 +16,91 @@ const activeTools = tools.filter(t => t.isActive).length;
 const inactiveTools = totalTools - activeTools;
 
 let recentSubmissions: any[] = [];
+let dbAnalyticsData: any = null;
+
 if (db) {
   try {
+    // Recent submissions
     recentSubmissions = await db
       .select()
       .from(contactSubmissions)
       .orderBy(desc(contactSubmissions.createdAt))
       .limit(5);
+
+    // 90 days ago timestamp
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    // 1. Total unique visitors (all time)
+    const uniqueResult = await db
+      .select({ count: sql<number>`count(distinct ${pageViews.visitorId})` })
+      .from(pageViews);
+    const totalUnique = Number(uniqueResult[0]?.count || 0);
+
+    // 2. Total tool runs
+    const runsResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(toolExecutions);
+    const totalRuns = Number(runsResult[0]?.count || 0);
+
+    // If we have some logged views or runs, pull full chart data
+    if (totalUnique > 0 || totalRuns > 0) {
+      // 3. Page views grouped by day (last 90 days)
+      const viewsLogs = await db
+        .select({
+          day: sql<string>`to_char(${pageViews.createdAt}, 'YYYY-MM-DD')`,
+          isNew: pageViews.isNewVisitor,
+          count: sql<number>`count(*)`
+        })
+        .from(pageViews)
+        .where(gte(pageViews.createdAt, ninetyDaysAgo))
+        .groupBy(sql`to_char(${pageViews.createdAt}, 'YYYY-MM-DD')`, pageViews.isNewVisitor)
+        .orderBy(sql`to_char(${pageViews.createdAt}, 'YYYY-MM-DD')`);
+
+      // 4. Tool executions grouped by day (last 90 days)
+      const executionsLogs = await db
+        .select({
+          day: sql<string>`to_char(${toolExecutions.createdAt}, 'YYYY-MM-DD')`,
+          count: sql<number>`count(*)`
+        })
+        .from(toolExecutions)
+        .where(gte(toolExecutions.createdAt, ninetyDaysAgo))
+        .groupBy(sql`to_char(${toolExecutions.createdAt}, 'YYYY-MM-DD')`)
+        .orderBy(sql`to_char(${toolExecutions.createdAt}, 'YYYY-MM-DD')`);
+
+      // 5. Peak hours of the day
+      const hourlyLogs = await db
+        .select({
+          hour: sql<number>`extract(hour from ${pageViews.createdAt})`,
+          count: sql<number>`count(*)`
+        })
+        .from(pageViews)
+        .groupBy(sql`extract(hour from ${pageViews.createdAt})`)
+        .orderBy(sql`extract(hour from ${pageViews.createdAt})`);
+
+      // 6. Top tools usage
+      const topToolsLogs = await db
+        .select({
+          toolSlug: toolExecutions.toolSlug,
+          count: sql<number>`count(*)`
+        })
+        .from(toolExecutions)
+        .groupBy(toolExecutions.toolSlug)
+        .orderBy(sql`count(*) desc`)
+        .limit(10);
+
+      // Assemble dataset
+      dbAnalyticsData = {
+        totalUnique,
+        totalRuns,
+        viewsLogs: viewsLogs.map(v => ({ day: v.day, isNew: v.isNew, count: Number(v.count) })),
+        executionsLogs: executionsLogs.map(e => ({ day: e.day, count: Number(e.count) })),
+        hourlyLogs: hourlyLogs.map(h => ({ hour: Number(h.hour), count: Number(h.count) })),
+        topToolsLogs: topToolsLogs.map(t => ({ toolSlug: t.toolSlug, count: Number(t.count) }))
+      };
+    }
   } catch (e) {
-    console.error("Dashboard failed to load contact submissions:", e);
+    console.error("Dashboard failed to load analytics from Neon DB:", e);
   }
 }
 ---
@@ -75,7 +152,11 @@ if (db) {
           {db ? "Stored in Neon database" : "Local logging mode (No DB)"}
         </div>
       </div>
+    </div>
 
+    {/* Analytics Insights (Traffic, Retention, Peak Times, Charts) */}
+    <div class="border-t border-border/60 pt-8">
+      <AnalyticsDashboard client:load dbData={dbAnalyticsData} />
     </div>
 
     {/* Quick Links & Database Status */}

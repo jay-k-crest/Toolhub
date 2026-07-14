@@ -91,6 +91,52 @@ const jsonLdString = jsonLd ? JSON.stringify(jsonLd) : null;
     {jsonLdString && <script type="application/ld+json" set:html={jsonLdString} />}
 
     <ClientRouter />
+
+    {/* Analytics & Traffic Logging Script */}
+    <script>
+      const trackAnalytics = () => {
+        if (typeof window === "undefined") return;
+
+        // 1. Log Page View
+        const pathname = window.location.pathname;
+        fetch("/api/analytics/log-view", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pathname }),
+        }).catch(() => {});
+
+        // 2. Expose a global logger for executions
+        (window as any).logToolExecution = (toolSlug: string) => {
+          fetch("/api/analytics/log-run", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ toolSlug }),
+          }).catch(() => {});
+        };
+      };
+
+      // Run on every page navigation (Astro ClientRouter compatibility)
+      document.addEventListener("astro:page-load", trackAnalytics);
+
+      // Track clicks on calculate buttons inside the calculator container
+      document.addEventListener("click", (e) => {
+        const container = document.getElementById("calculator-container");
+        if (container && container.contains(e.target as Node)) {
+          const target = e.target as HTMLElement;
+          const button = target.closest("button");
+          // If a button is clicked in the calculator, we count it as a tool run
+          if (button) {
+            const pathParts = window.location.pathname.split("/").filter(Boolean);
+            if (pathParts.length === 2) {
+              const toolSlug = pathParts[1];
+              if ((window as any).logToolExecution) {
+                (window as any).logToolExecution(toolSlug);
+              }
+            }
+          }
+        }
+      });
+    </script>
   </head>
   <body class="min-h-screen bg-background text-foreground flex flex-col font-sans antialiased transition-colors duration-150">
     <Header client:load toolsUrl="/tools-index.json" />
