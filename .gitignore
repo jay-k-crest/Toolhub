@@ -39,3 +39,4 @@ desktop.ini
 .vscode/*.log
 .vscode/sftp.json
 
+deployment.md
