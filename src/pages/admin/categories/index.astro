@@ -1,0 +1,59 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { getCategories } from "../../../lib/data";
+import { db } from "../../../lib/db";
+
+export const prerender = false;
+
+const categories = await getCategories();
+---
+
+<AdminLayout title="Categories Manager">
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <p class="text-sm text-muted font-medium">Manage top-level topic directories and display sorting orders.</p>
+      </div>
+    </div>
+
+    {!db && (
+      <div class="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-sm leading-relaxed">
+        <strong>Read-only Mode:</strong> Neon database is not configured. Categories are loaded from statically compiled configurations.
+      </div>
+    )}
+
+    <div class="border border-border rounded-xl bg-card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-border text-sm">
+          <thead class="bg-secondary/40 font-medium text-muted">
+            <tr>
+              <th scope="col" className="px-6 py-3.5 text-left">Category Name</th>
+              <th scope="col" className="px-6 py-3.5 text-left">Slug</th>
+              <th scope="col" className="px-6 py-3.5 text-left">Icon ID</th>
+              <th scope="col" className="px-6 py-3.5 text-left">Display Order</th>
+              <th scope="col" className="px-6 py-3.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border bg-card">
+            {categories.map((cat) => (
+              <tr class="hover:bg-secondary/20">
+                <td class="px-6 py-4 font-semibold text-foreground">{cat.name}</td>
+                <td class="px-6 py-4 font-mono text-xs text-muted">/{cat.slug}/</td>
+                <td class="px-6 py-4 font-mono text-xs text-muted">{cat.icon}</td>
+                <td class="px-6 py-4 text-foreground tabular-nums">{cat.displayOrder}</td>
+                <td class="px-6 py-4 text-right">
+                  <button
+                    disabled
+                    class="inline-flex items-center justify-center h-8 px-3 text-xs font-bold rounded-md bg-secondary text-muted-foreground border border-border cursor-not-allowed opacity-50"
+                  >
+                    Edit (DB)
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

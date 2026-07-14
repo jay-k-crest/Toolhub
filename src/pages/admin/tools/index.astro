@@ -1,0 +1,72 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { getTools, getCategories } from "../../../lib/data";
+import { db } from "../../../lib/db";
+
+export const prerender = false;
+
+const tools = await getTools();
+const categories = await getCategories();
+
+const catIdToName = new Map(categories.map(c => [c.id, c.name]));
+---
+
+<AdminLayout title="Calculators Manager">
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <p class="text-sm text-muted">View and edit display parameters, SEO details, and active status for all {tools.length} tools.</p>
+      </div>
+    </div>
+
+    {!db && (
+      <div class="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-sm leading-relaxed">
+        <strong>Read-only Mode:</strong> Neon database is not configured. Tools are loaded from statically compiled configurations. To enable inline edits and persistence, configure the <code>DATABASE_URL</code> environment variable.
+      </div>
+    )}
+
+    <div class="border border-border rounded-xl bg-card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-border text-sm">
+          <thead class="bg-secondary/40 font-medium text-muted">
+            <tr>
+              <th scope="col" className="px-6 py-3.5 text-left">Name</th>
+              <th scope="col" className="px-6 py-3.5 text-left">Slug</th>
+              <th scope="col" className="px-6 py-3.5 text-left">Category</th>
+              <th scope="col" className="px-6 py-3.5 text-left">Status</th>
+              <th scope="col" className="px-6 py-3.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border bg-card">
+            {tools.map((tool) => (
+              <tr class="hover:bg-secondary/20">
+                <td class="px-6 py-4 font-semibold text-foreground">{tool.name}</td>
+                <td class="px-6 py-4 font-mono text-xs text-muted">{tool.slug}</td>
+                <td class="px-6 py-4 text-foreground">
+                  {catIdToName.get(tool.categoryId || 0) || tool.categorySlug}
+                </td>
+                <td class="px-6 py-4">
+                  <span class={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                    tool.isActive 
+                      ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-500" 
+                      : "bg-muted/40 border border-border text-muted"
+                  }`}>
+                    {tool.isActive ? "Active" : "Draft"}
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <a
+                    href={`/admin/tools/${tool.slug}/`}
+                    class="inline-flex items-center justify-center h-8 px-3 text-xs font-bold rounded-md bg-secondary hover:bg-secondary/80 text-foreground transition-colors border border-border"
+                  >
+                    Edit Config
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

@@ -1,0 +1,178 @@
+---
+import ToolLayout from "../../layouts/ToolLayout.astro";
+import { getCategories, getTools } from "../../lib/data";
+import { getExplanationFor } from "../../content/tools-explanations";
+
+// Import all React Calculator Components
+import EmiCalculator from "../../components/calculators/EmiCalculator";
+import BmiCalculator from "../../components/calculators/BmiCalculator";
+import GpaCalculator from "../../components/calculators/GpaCalculator";
+import PercentageCalculator from "../../components/calculators/PercentageCalculator";
+import UnitConverter from "../../components/calculators/UnitConverter";
+import ScientificCalculator from "../../components/calculators/ScientificCalculator";
+import SipCalculator from "../../components/calculators/SipCalculator";
+import DepositCalculator from "../../components/calculators/DepositCalculator";
+import InflationCalculator from "../../components/calculators/InflationCalculator";
+import SalaryToInHandCalculator from "../../components/calculators/SalaryToInHandCalculator";
+import GstCalculator from "../../components/calculators/GstCalculator";
+
+// New Finance & Loans Calculators
+import PpfCalculator from "../../components/calculators/PpfCalculator";
+import HraCalculator from "../../components/calculators/HraCalculator";
+import GratuityCalculator from "../../components/calculators/GratuityCalculator";
+import EpfCalculator from "../../components/calculators/EpfCalculator";
+import CapitalGainsTaxCalculator from "../../components/calculators/CapitalGainsTaxCalculator";
+import LoanEligibilityCalculator from "../../components/calculators/LoanEligibilityCalculator";
+import LoanPrepaymentCalculator from "../../components/calculators/LoanPrepaymentCalculator";
+import CreditCardInterestCalculator from "../../components/calculators/CreditCardInterestCalculator";
+import RentVsBuyCalculator from "../../components/calculators/RentVsBuyCalculator";
+import RetirementCorpusCalculator from "../../components/calculators/RetirementCorpusCalculator";
+import NetWorthCalculator from "../../components/calculators/NetWorthCalculator";
+import BusinessLoanEmiCalculator from "../../components/calculators/BusinessLoanEmiCalculator";
+import CurrencyConverter from "../../components/calculators/CurrencyConverter";
+import IncomeTaxCalculator from "../../components/calculators/IncomeTaxCalculator";
+
+import HealthCalculators from "../../components/calculators/HealthCalculators";
+import EducationCalculators from "../../components/calculators/EducationCalculators";
+import ConvertersCalculators from "../../components/calculators/ConvertersCalculators";
+import MathCalculators from "../../components/calculators/MathCalculators";
+import RealEstateCalculators from "../../components/calculators/RealEstateCalculators";
+import BusinessCalculators from "../../components/calculators/BusinessCalculators";
+import InsuranceCalculators from "../../components/calculators/InsuranceCalculators";
+import CryptoStocksCalculators from "../../components/calculators/CryptoStocksCalculators";
+import SeoTextCalculators from "../../components/calculators/SeoTextCalculators";
+import DateTimeCalculators from "../../components/calculators/DateTimeCalculators";
+import AutomobileCalculators from "../../components/calculators/AutomobileCalculators";
+import AstrologyCalculators from "../../components/calculators/AstrologyCalculators";
+import DeveloperAiCalculators from "../../components/calculators/DeveloperAiCalculators";
+
+import FallbackCalculator from "../../components/calculators/FallbackCalculator";
+
+export async function getStaticPaths() {
+  const tools = await getTools();
+  const categories = await getCategories();
+
+  return tools.map((tool) => {
+    const category = categories.find((c) => c.slug === tool.categorySlug);
+    const related = tools
+      .filter((t) => t.categorySlug === tool.categorySlug && t.slug !== tool.slug && t.isActive)
+      .slice(0, 3);
+
+    return {
+      params: {
+        category: tool.categorySlug,
+        tool: tool.slug,
+      },
+      props: {
+        tool,
+        categoryName: category ? category.name : "Utility",
+        categorySlug: tool.categorySlug,
+        relatedTools: related,
+      },
+    };
+  });
+}
+
+const { tool, categoryName, categorySlug, relatedTools } = Astro.props;
+
+// Fetch rich 300-500 word explanation
+const htmlExplanation = getExplanationFor(tool.slug, tool.name);
+---
+
+<ToolLayout
+  tool={tool}
+  categoryName={categoryName}
+  categorySlug={categorySlug}
+  relatedTools={relatedTools}
+>
+  {/* Render Interactive React Component Island based on tool slug */}
+  {tool.slug === "emi-calculator" && <EmiCalculator client:load />}
+  {tool.slug === "bmi-calculator" && <BmiCalculator client:load />}
+  {tool.slug === "gpa-calculator" && <GpaCalculator client:load />}
+  {tool.slug === "percentage-calculator" && <PercentageCalculator client:load />}
+  {tool.slug === "unit-converter" && <UnitConverter client:load />}
+  {tool.slug === "scientific-calculator" && <ScientificCalculator client:load />}
+  {["sip-calculator", "sip-step-up-calculator", "lumpsum-calculator"].includes(tool.slug) && <SipCalculator client:load />}
+  {["fd-calculator", "rd-calculator", "compound-interest-calculator", "simple-interest-calculator"].includes(tool.slug) && <DepositCalculator client:load />}
+  {tool.slug === "inflation-calculator" && <InflationCalculator client:load />}
+  {tool.slug === "salary-to-in-hand-calculator" && <SalaryToInHandCalculator client:load />}
+  {tool.slug === "gst-calculator" && <GstCalculator client:load />}
+
+  {/* New Finance & Loans Calculators */}
+  {tool.slug === "ppf-calculator" && <PpfCalculator client:load />}
+  {tool.slug === "hra-calculator" && <HraCalculator client:load />}
+  {tool.slug === "gratuity-calculator" && <GratuityCalculator client:load />}
+  {tool.slug === "epf-calculator" && <EpfCalculator client:load />}
+  {tool.slug === "capital-gains-tax-calculator" && <CapitalGainsTaxCalculator client:load />}
+  {tool.slug === "loan-eligibility-calculator" && <LoanEligibilityCalculator client:load />}
+  {tool.slug === "loan-prepayment-calculator" && <LoanPrepaymentCalculator client:load />}
+  {tool.slug === "rent-vs-buy-calculator" && <RentVsBuyCalculator client:load />}
+  {tool.slug === "retirement-corpus-calculator" && <RetirementCorpusCalculator client:load />}
+  {tool.slug === "credit-card-interest-calculator" && <CreditCardInterestCalculator client:load />}
+  {tool.slug === "net-worth-calculator" && <NetWorthCalculator client:load />}
+  {tool.slug === "business-loan-emi-calculator" && <BusinessLoanEmiCalculator client:load />}
+  {tool.slug === "currency-converter" && <CurrencyConverter client:load />}
+  {tool.slug === "income-tax-calculator" && <IncomeTaxCalculator client:load />}
+
+  {/* Newly Mapped Categories (62 tools) */}
+  {["calorie-calculator", "body-fat-calculator", "ideal-weight-calculator", "water-intake-calculator", "pregnancy-due-date-calculator", "ovulation-calculator", "age-calculator", "heart-rate-zone-calculator", "macro-calculator"].includes(tool.slug) && (
+    <HealthCalculators client:load slug={tool.slug} />
+  )}
+  {["cgpa-to-percentage-converter", "grade-calculator", "attendance-percentage-calculator", "salary-hike-percentage-calculator", "notice-period-calculator"].includes(tool.slug) && (
+    <EducationCalculators client:load slug={tool.slug} />
+  )}
+  {["time-zone-converter", "date-difference-calculator", "age-in-days-calculator", "number-to-words-converter", "roman-numeral-converter", "data-storage-converter", "speed-converter"].includes(tool.slug) && (
+    <ConvertersCalculators client:load slug={tool.slug} />
+  )}
+  {["percentage-increase-calculator", "ratio-calculator", "average-calculator", "standard-deviation-calculator", "fraction-calculator", "random-number-generator", "password-generator", "word-counter"].includes(tool.slug) && (
+    <MathCalculators client:load slug={tool.slug} />
+  )}
+  {["home-loan-affordability-calculator", "stamp-duty-calculator", "property-tax-calculator", "rental-yield-calculator"].includes(tool.slug) && (
+    <RealEstateCalculators client:load slug={tool.slug} />
+  )}
+  {["freelance-rate-calculator", "invoice-generator", "break-even-calculator", "profit-margin-calculator", "markup-calculator", "roi-calculator", "cagr-calculator"].includes(tool.slug) && (
+    <BusinessCalculators client:load slug={tool.slug} />
+  )}
+  {["term-insurance-calculator", "life-insurance-calculator", "car-insurance-idv-calculator", "health-insurance-calculator"].includes(tool.slug) && (
+    <InsuranceCalculators client:load slug={tool.slug} />
+  )}
+  {["crypto-profit-calculator", "stock-dca-calculator", "dividend-yield-calculator", "pe-ratio-calculator"].includes(tool.slug) && (
+    <CryptoStocksCalculators client:load slug={tool.slug} />
+  )}
+  {["case-converter", "text-to-slug-converter", "lorem-ipsum-generator", "reading-time-calculator", "meta-tag-length-checker", "qr-code-generator"].includes(tool.slug) && (
+    <SeoTextCalculators client:load slug={tool.slug} />
+  )}
+  {["countdown-timer", "working-days-calculator", "timezone-meeting-planner"].includes(tool.slug) && (
+    <DateTimeCalculators client:load slug={tool.slug} />
+  )}
+  {["car-loan-emi-calculator", "fuel-cost-calculator", "car-depreciation-calculator"].includes(tool.slug) && (
+    <AutomobileCalculators client:load slug={tool.slug} />
+  )}
+  {["numerology-calculator", "baby-name-numerology-generator"].includes(tool.slug) && (
+    <AstrologyCalculators client:load slug={tool.slug} />
+  )}
+  {["jwt-secret-generator", "ai-chat-to-json"].includes(tool.slug) && (
+    <DeveloperAiCalculators client:load slug={tool.slug} />
+  )}
+  
+  {/* If no specific React component is matched, render Fallback */}
+  {!["emi-calculator", "bmi-calculator", "gpa-calculator", "percentage-calculator", "unit-converter", "scientific-calculator", "sip-calculator", "sip-step-up-calculator", "lumpsum-calculator", "fd-calculator", "rd-calculator", "compound-interest-calculator", "simple-interest-calculator", "inflation-calculator", "salary-to-in-hand-calculator", "gst-calculator", "ppf-calculator", "hra-calculator", "gratuity-calculator", "epf-calculator", "capital-gains-tax-calculator", "loan-eligibility-calculator", "loan-prepayment-calculator", "rent-vs-buy-calculator", "retirement-corpus-calculator", "credit-card-interest-calculator", "net-worth-calculator", "business-loan-emi-calculator", "currency-converter", "income-tax-calculator",
+    "calorie-calculator", "body-fat-calculator", "ideal-weight-calculator", "water-intake-calculator", "pregnancy-due-date-calculator", "ovulation-calculator", "age-calculator", "heart-rate-zone-calculator", "macro-calculator",
+    "cgpa-to-percentage-converter", "grade-calculator", "attendance-percentage-calculator", "salary-hike-percentage-calculator", "notice-period-calculator",
+    "time-zone-converter", "date-difference-calculator", "age-in-days-calculator", "number-to-words-converter", "roman-numeral-converter", "data-storage-converter", "speed-converter",
+    "percentage-increase-calculator", "ratio-calculator", "average-calculator", "standard-deviation-calculator", "fraction-calculator", "random-number-generator", "password-generator", "word-counter", "jwt-secret-generator",
+    "home-loan-affordability-calculator", "stamp-duty-calculator", "property-tax-calculator", "rental-yield-calculator",
+    "freelance-rate-calculator", "invoice-generator", "break-even-calculator", "profit-margin-calculator", "markup-calculator", "roi-calculator", "cagr-calculator",
+    "term-insurance-calculator", "life-insurance-calculator", "car-insurance-idv-calculator", "health-insurance-calculator",
+    "crypto-profit-calculator", "stock-dca-calculator", "dividend-yield-calculator", "pe-ratio-calculator",
+    "case-converter", "text-to-slug-converter", "lorem-ipsum-generator", "reading-time-calculator", "meta-tag-length-checker", "qr-code-generator", "ai-chat-to-json",
+    "countdown-timer", "working-days-calculator", "timezone-meeting-planner",
+    "car-loan-emi-calculator", "fuel-cost-calculator", "car-depreciation-calculator",
+    "numerology-calculator", "baby-name-numerology-generator"
+  ].includes(tool.slug) && (
+    <FallbackCalculator client:load name={tool.name} />
+  )}
+
+  {/* SEO Surrounding Content Slot */}
+  <div slot="explanation" set:html={htmlExplanation} />
+</ToolLayout>

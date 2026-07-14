@@ -1,0 +1,59 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { db } from "../../../lib/db";
+import { contactSubmissions } from "../../../lib/schema";
+import { desc } from "drizzle-orm";
+
+export const prerender = false;
+
+let submissions: any[] = [];
+if (db) {
+  try {
+    submissions = await db
+      .select()
+      .from(contactSubmissions)
+      .orderBy(desc(contactSubmissions.createdAt));
+  } catch (e) {
+    console.error("Inbox failed to load submissions:", e);
+  }
+}
+---
+
+<AdminLayout title="Contact Inbox">
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <p class="text-sm text-muted">Read and manage contact form messages received from ToolHub users.</p>
+      </div>
+    </div>
+
+    {!db ? (
+      <div class="p-8 border border-dashed border-border rounded-xl bg-card text-center text-muted">
+        Neon database is not configured. Contact submissions are not saved or visible here.
+      </div>
+    ) : submissions.length === 0 ? (
+      <div class="p-12 border border-dashed border-border rounded-xl bg-card text-center text-muted">
+        No messages received yet. When users submit inquiry forms, they will show up here.
+      </div>
+    ) : (
+      <div class="space-y-4">
+        {submissions.map((sub) => (
+          <div class="p-6 rounded-xl border border-border bg-card shadow-sm space-y-3">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-border/60 pb-3">
+              <div>
+                <h3 class="font-heading font-bold text-foreground text-base">{sub.name}</h3>
+                <a href={`mailto:${sub.email}`} class="text-xs text-primary hover:underline">{sub.email}</a>
+              </div>
+              <span class="text-xs text-muted tabular-nums">
+                Received: {new Date(sub.createdAt).toLocaleString()}
+              </span>
+            </div>
+            <p class="text-sm text-muted leading-relaxed whitespace-pre-wrap">
+              {sub.message}
+            </p>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</AdminLayout>

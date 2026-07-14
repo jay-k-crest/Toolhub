@@ -1,0 +1,44 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ContactForm from "../components/shared/ContactForm";
+---
+
+<BaseLayout title="Contact Us — ToolHub" description="Get in touch with the ToolHub support team. Send feedback, report calculator issues, or suggest new web tools.">
+  <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+      
+      {/* Description Column */}
+      <div class="space-y-6 flex flex-col justify-center">
+        <h1 class="text-3xl font-heading font-extrabold tracking-tight sm:text-4xl text-foreground">
+          Contact the Team
+        </h1>
+        <p class="text-base sm:text-lg text-muted leading-relaxed">
+          We want to hear from you! If you noticed a bug with our math, want to recommend a new converter, or are interested in partnership opportunities, send us an inquiry.
+        </p>
+
+        <div class="space-y-4">
+          <div class="flex gap-4 items-start">
+            <span class="text-primary font-bold text-lg font-mono">1.</span>
+            <div>
+              <h3 class="font-heading font-bold text-foreground">Custom Requests</h3>
+              <p class="text-sm text-muted">Suggest specific calculators. We build browser tools based on search volume recommendations.</p>
+            </div>
+          </div>
+          <div class="flex gap-4 items-start">
+            <span class="text-primary font-bold text-lg font-mono">2.</span>
+            <div>
+              <h3 class="font-heading font-bold text-foreground">Corporate Partnerships</h3>
+              <p class="text-sm text-muted">Advertise on our platforms or integrate white-label calculations on your portal.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Form Column */}
+      <div>
+        <ContactForm client:load />
+      </div>
+
+    </div>
+  </div>
+</BaseLayout>

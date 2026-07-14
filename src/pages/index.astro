@@ -1,0 +1,161 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import HomepageSearch from "../components/shared/HomepageSearch";
+import AdSlot from "../components/layout/AdSlot.astro";
+import { getCategories, getTools } from "../lib/data";
+
+const categories = await getCategories();
+const tools = await getTools();
+
+// Map of inline SVGs for categories to keep page zero-JS on load
+const categorySvgs: Record<string, string> = {
+  finance: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><line x1="3" y1="21" x2="21" y2="21"></line><line x1="3" y1="10" x2="21" y2="10"></line><polygon points="12 2 2 10 22 10"></polygon><line x1="4" y1="10" x2="4" y2="21"></line><line x1="9" y1="10" x2="9" y2="21"></line><line x1="14" y1="10" x2="14" y2="21"></line><line x1="19" y1="10" x2="19" y2="21"></line></svg>`,
+  health: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path><path d="M3.22 12H9.5l1.5-3 2 6 1.5-3h4.28"></path></svg>`,
+  education: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"></path><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path></svg>`,
+  converters: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M21.3 15.3a2.82 2.82 0 0 0-4-4l-4.56 4.56a2.82 2.82 0 0 0 4 4Z"></path><path d="M11.56 18.56a2.82 2.82 0 0 0-4-4L3 19.12a2.82 2.82 0 0 0 4 4Z"></path><path d="m9 9 4 4"></path><path d="m5 5 2.5 2.5"></path><path d="m14.5 14.5 2.5 2.5"></path></svg>`,
+  math: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><line x1="16" y1="16" x2="12" y2="16"></line><line x1="12" y1="14" x2="12" y2="18"></line><line x1="8" y1="14" x2="8" y2="18"></line><line x1="8" y1="10" x2="10" y2="10"></line><line x1="14" y1="10" x2="16" y2="10"></line></svg>`,
+  "real-estate": `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`,
+  business: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`,
+  insurance: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>`,
+  "crypto-stocks": `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>`,
+  "seo-text": `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>`,
+  "date-time": `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
+  automobile: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><rect x="1" y="3" width="15" height="13" rx="2"></rect><polygon points="16 8 20 8 23 11 23 16 16 16"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>`,
+  astrology: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>`
+};
+
+// Top/Most Popular tools lists
+const popularSlugs = [
+  "emi-calculator",
+  "sip-calculator",
+  "bmi-calculator",
+  "gpa-calculator",
+  "percentage-calculator",
+  "unit-converter",
+  "inflation-calculator",
+  "salary-to-in-hand-calculator"
+];
+
+const popularTools = tools.filter(t => popularSlugs.includes(t.slug));
+
+// Calculate counts per category
+const categoryCounts = categories.reduce((acc, cat) => {
+  acc[cat.slug] = tools.filter(t => t.categorySlug === cat.slug && t.isActive).length;
+  return acc;
+}, {} as Record<string, number>);
+
+const orgLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "ToolHub",
+  "url": "https://toolhub.online/",
+  "logo": "https://toolhub.online/favicon.svg",
+  "description": "Free online browser-based calculators and utility tools."
+};
+---
+
+<BaseLayout title="ToolHub — Free Online Calculators & Web Tools" jsonLd={orgLd}>
+  
+  {/* Hero Section */}
+  <section class="relative bg-gradient-to-b from-secondary/50 to-background py-16 sm:py-20 px-4 text-center border-b border-border">
+    <div class="mx-auto max-w-4xl space-y-6">
+      <h1 class="text-4xl font-heading font-extrabold tracking-tight text-foreground sm:text-5xl md:text-6xl">
+        Free Online Calculators & Tools
+      </h1>
+      <p class="mx-auto max-w-2xl text-base sm:text-lg text-muted leading-relaxed">
+        Quick, secure, and 100% private. All calculations run entirely inside your browser. No data ever leaves your device.
+      </p>
+
+      {/* Large fuzzy search component */}
+      <div class="pt-4">
+        <HomepageSearch client:load toolsUrl="/tools-index.json" />
+      </div>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 space-y-16">
+    
+    {/* Category Grid */}
+    <section class="space-y-6">
+      <div class="text-center md:text-left">
+        <h2 class="text-2xl font-heading font-bold text-foreground sm:text-3xl">
+          Browse by Category
+        </h2>
+        <p class="text-sm text-muted mt-1">Explore our range of structured tools by topic</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {categories.map((cat) => (
+          <a
+            href={`/${cat.slug}/`}
+            class="group flex flex-col justify-between p-6 rounded-xl border border-border bg-card shadow-sm hover:border-primary hover:shadow-md transition-all duration-150"
+          >
+            <div>
+              <div class="flex items-center gap-3">
+                <div class="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-150" set:html={categorySvgs[cat.slug] || categorySvgs.math} />
+                <h3 class="font-heading font-bold text-foreground text-lg group-hover:text-primary transition-colors">
+                  {cat.name}
+                </h3>
+              </div>
+              <p class="text-xs sm:text-sm text-muted mt-3 leading-relaxed">
+                {cat.description}
+              </p>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-border/60 flex items-center justify-between text-xs">
+              <span class="text-muted font-medium">
+                {categoryCounts[cat.slug] || 0} tools available
+              </span>
+              <span class="text-primary font-bold inline-flex items-center gap-1">
+                View All
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" class="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    {/* Ad slot in-feed */}
+    <AdSlot placement="in-feed" />
+
+    {/* Popular Tools Section */}
+    <section class="space-y-6">
+      <div class="text-center md:text-left">
+        <h2 class="text-2xl font-heading font-bold text-foreground sm:text-3xl">
+          Most Popular Tools
+        </h2>
+        <p class="text-sm text-muted mt-1">Our most visited calculators used daily by millions</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {popularTools.map((tool) => (
+          <a
+            href={`/${tool.categorySlug}/${tool.slug}/`}
+            class="group p-5 rounded-lg border border-border bg-card shadow-sm hover:border-primary hover:shadow-md transition-all duration-150 flex flex-col justify-between"
+          >
+            <div>
+              <h3 class="font-heading font-bold text-foreground group-hover:text-primary transition-colors text-base">
+                {tool.name}
+              </h3>
+              <p class="text-xs text-muted mt-2 leading-relaxed line-clamp-2">
+                {tool.shortDesc}
+              </p>
+            </div>
+            
+            <div class="mt-4 pt-3 flex items-center justify-between text-xs">
+              <span class="text-primary/70 font-semibold uppercase tracking-wider text-[10px]">
+                {categories.find(c => c.slug === tool.categorySlug)?.name || ""}
+              </span>
+              <span class="text-primary font-bold inline-flex items-center gap-0.5">
+                Calculate
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" class="h-3 w-3 group-hover:translate-x-0.5 transition-transform"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+  </div>
+</BaseLayout>

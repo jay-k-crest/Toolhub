@@ -1,0 +1,76 @@
+---
+import { getCategories } from "../../lib/data";
+
+const categories = await getCategories();
+---
+
+<footer class="border-t border-border bg-card text-foreground">
+  <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5">
+      {/* Brand column */}
+      <div class="col-span-2 lg:col-span-2">
+        <span class="font-heading text-lg font-bold tracking-tight">
+          Tool<span class="text-primary">Hub</span>
+        </span>
+        <p class="mt-4 max-w-xs text-sm text-muted">
+          Your one-stop destination for free, simple, and fast browser-based utility calculators. 100% private, client-side calculations.
+        </p>
+      </div>
+
+      {/* Categories Columns */}
+      <div class="col-span-1">
+        <h3 class="text-sm font-semibold tracking-wider uppercase text-foreground">Calculators</h3>
+        <ul class="mt-4 space-y-2">
+          {categories.slice(0, 5).map(cat => (
+            <li>
+              <a href={`/${cat.slug}/`} class="text-sm text-muted hover:text-primary transition-colors">
+                {cat.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="col-span-1">
+        <h3 class="text-sm font-semibold tracking-wider uppercase text-foreground">More Tools</h3>
+        <ul class="mt-4 space-y-2">
+          {categories.slice(5, 10).map(cat => (
+            <li>
+              <a href={`/${cat.slug}/`} class="text-sm text-muted hover:text-primary transition-colors">
+                {cat.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Pages Column */}
+      <div class="col-span-1">
+        <h3 class="text-sm font-semibold tracking-wider uppercase text-foreground">Legal & Info</h3>
+        <ul class="mt-4 space-y-2">
+          <li>
+            <a href="/about/" class="text-sm text-muted hover:text-primary transition-colors">About Us</a>
+          </li>
+          <li>
+            <a href="/contact/" class="text-sm text-muted hover:text-primary transition-colors">Contact</a>
+          </li>
+          <li>
+            <a href="/privacy-policy/" class="text-sm text-muted hover:text-primary transition-colors">Privacy Policy</a>
+          </li>
+          <li>
+            <a href="/terms-of-service/" class="text-sm text-muted hover:text-primary transition-colors">Terms of Service</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-12 border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+      <p class="text-xs text-muted">
+        &copy; {new Date().getFullYear()} ToolHub. All rights reserved. Calculations are for illustrative purposes and should not be treated as professional financial or medical advice.
+      </p>
+      <p class="text-xs text-muted">
+        Designed for speed & accessibility. Built with Astro.
+      </p>
+    </div>
+  </div>
+</footer>

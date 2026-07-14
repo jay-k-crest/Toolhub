@@ -1,0 +1,147 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { getCategories, getTools } from "../../lib/data";
+import { db } from "../../lib/db";
+import { contactSubmissions } from "../../lib/schema";
+import { desc } from "drizzle-orm";
+
+export const prerender = false;
+
+const categories = await getCategories();
+const tools = await getTools();
+
+const totalTools = tools.length;
+const activeTools = tools.filter(t => t.isActive).length;
+const inactiveTools = totalTools - activeTools;
+
+let recentSubmissions: any[] = [];
+if (db) {
+  try {
+    recentSubmissions = await db
+      .select()
+      .from(contactSubmissions)
+      .orderBy(desc(contactSubmissions.createdAt))
+      .limit(5);
+  } catch (e) {
+    console.error("Dashboard failed to load contact submissions:", e);
+  }
+}
+---
+
+<AdminLayout title="Dashboard">
+  <div class="space-y-8">
+    
+    {/* Summary Cards */}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      
+      <div class="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-semibold text-muted uppercase tracking-wider">Total Calculators</span>
+          <p class="text-3xl font-heading font-extrabold mt-1 text-foreground tabular-nums">{totalTools}</p>
+        </div>
+        <div class="mt-4 text-xs text-muted">
+          Spread across {categories.length} categories
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-semibold text-muted uppercase tracking-wider">Active Tools</span>
+          <p class="text-3xl font-heading font-extrabold mt-1 text-emerald-500 tabular-nums">{activeTools}</p>
+        </div>
+        <div class="mt-4 text-xs text-muted">
+          Publicly visible in routing
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-semibold text-muted uppercase tracking-wider">Inactive Drafts</span>
+          <p class="text-3xl font-heading font-extrabold mt-1 text-orange-500 tabular-nums">{inactiveTools}</p>
+        </div>
+        <div class="mt-4 text-xs text-muted">
+          Hidden from search & sitemaps
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-semibold text-muted uppercase tracking-wider">Contact Inquiries</span>
+          <p class="text-3xl font-heading font-extrabold mt-1 text-primary tabular-nums">
+            {db ? recentSubmissions.length : "N/A"}
+          </p>
+        </div>
+        <div class="mt-4 text-xs text-muted">
+          {db ? "Stored in Neon database" : "Local logging mode (No DB)"}
+        </div>
+      </div>
+
+    </div>
+
+    {/* Quick Links & Database Status */}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      {/* Database status banner */}
+      <div class="lg:col-span-8 space-y-6">
+        <div class="p-6 rounded-xl border border-border bg-card space-y-4">
+          <h3 class="text-lg font-heading font-bold text-foreground">Database Configuration</h3>
+          <p class="text-sm text-muted leading-relaxed">
+            ToolHub is operating in **{db ? "Live Database Mode" : "Static Fallback Mode"}**.
+            {db ? (
+              "All calculators metadata, display configurations, and contact submissions are synchronized with your Neon Postgres cloud cluster."
+            ) : (
+              "No DATABASE_URL environment variable was detected. All configurations are read-only from the local config file, and form submissions are logged to the console output."
+            )}
+          </p>
+          {db && (
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-full text-xs font-semibold">
+              Neon Connection Online
+            </div>
+          )}
+        </div>
+
+        {/* Recent contact submissions list */}
+        <div class="p-6 rounded-xl border border-border bg-card space-y-4">
+          <h3 class="text-lg font-heading font-bold text-foreground">Recent Inquiries</h3>
+          {recentSubmissions.length === 0 ? (
+            <p class="text-sm text-muted">No recent submissions found.</p>
+          ) : (
+            <div class="divide-y divide-border text-sm">
+              {recentSubmissions.map((sub) => (
+                <div class="py-3 first:pt-0 last:pb-0 space-y-1">
+                  <div class="flex justify-between font-semibold text-foreground">
+                    <span>{sub.name} ({sub.email})</span>
+                    <span class="text-xs font-normal text-muted">
+                      {new Date(sub.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p class="text-muted leading-relaxed text-xs">{sub.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Quick shortcuts */}
+      <div class="lg:col-span-4 space-y-6">
+        <div class="p-6 rounded-xl border border-border bg-card space-y-4">
+          <h3 class="text-lg font-heading font-bold text-foreground">Admin Shortcuts</h3>
+          <div class="flex flex-col gap-2">
+            <a href="/admin/tools/" class="inline-flex items-center justify-center h-10 px-4 py-2 text-sm font-semibold rounded-md bg-secondary hover:bg-secondary/80 text-foreground transition-colors">
+              Manage Calculators
+            </a>
+            <a href="/admin/categories/" class="inline-flex items-center justify-center h-10 px-4 py-2 text-sm font-semibold rounded-md bg-secondary hover:bg-secondary/80 text-foreground transition-colors">
+              Manage Categories
+            </a>
+            <a href="/admin/contact/" class="inline-flex items-center justify-center h-10 px-4 py-2 text-sm font-semibold rounded-md bg-secondary hover:bg-secondary/80 text-foreground transition-colors">
+              Full Inbox
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</AdminLayout>

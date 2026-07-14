@@ -1,0 +1,203 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import AdSlot from "../components/layout/AdSlot.astro";
+import { ArrowLeft, ChevronRight, Calculator } from "lucide-react";
+
+interface FAQItem {
+  q: string;
+  a: string;
+}
+
+interface Tool {
+  name: string;
+  slug: string;
+  categorySlug: string;
+  shortDesc: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  introContent?: string;
+  faq?: FAQItem[];
+}
+
+interface Props {
+  tool: Tool;
+  categoryName: string;
+  categorySlug: string;
+  relatedTools: Tool[];
+}
+
+const { tool, categoryName, categorySlug, relatedTools } = Astro.props;
+
+const siteUrl = Astro.site ? Astro.site.origin : "https://toolhub.online";
+const toolUrl = `${siteUrl}/${categorySlug}/${tool.slug}/`;
+const categoryUrl = `${siteUrl}/${categorySlug}/`;
+
+// 1. Breadcrumb Schema
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": siteUrl
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": categoryName,
+      "item": categoryUrl
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": tool.name,
+      "item": toolUrl
+    }
+  ]
+};
+
+// 2. Software Application Schema
+const softwareLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": tool.name,
+  "description": tool.shortDesc,
+  "applicationCategory": categorySlug === "finance" ? "FinanceApplication" : "UtilityApplication",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+};
+
+// 3. FAQ Schema
+const faqLd = tool.faq && tool.faq.length > 0 ? {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": tool.faq.map(item => ({
+    "@type": "Question",
+    "name": item.q,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": item.a
+    }
+  }))
+} : null;
+
+// Combined JSON-LD schema array
+const jsonLd = [breadcrumbLd, softwareLd];
+if (faqLd) {
+  jsonLd.push(faqLd);
+}
+
+const displayTitle = tool.metaTitle || `${tool.name} — Free Online ${categoryName} Tool | ToolHub`;
+const displayDescription = tool.metaDescription || tool.shortDesc;
+---
+
+<BaseLayout title={displayTitle} description={displayDescription} jsonLd={jsonLd}>
+  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    
+    {/* 1. Breadcrumbs */}
+    <nav class="flex items-center space-x-1 text-xs text-muted mb-6" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-primary transition-colors">Home</a>
+      <ChevronRight class="h-3 w-3" />
+      <a href={`/${categorySlug}/`} class="hover:text-primary transition-colors">{categoryName}</a>
+      <ChevronRight class="h-3 w-3" />
+      <span class="text-foreground font-medium" aria-current="page">{tool.name}</span>
+    </nav>
+
+    {/* Header Section */}
+    <div class="mb-8">
+      <h1 class="text-3xl font-heading font-extrabold tracking-tight sm:text-4xl md:text-5xl mb-4">
+        {tool.name}
+      </h1>
+      {tool.introContent && (
+        <p class="text-base sm:text-lg text-muted max-w-3xl leading-relaxed">
+          {tool.introContent}
+        </p>
+      )}
+    </div>
+
+    {/* Layout Structure: Calculator + Content on left, Sticky Sidebar on right */}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      {/* Main Content Area */}
+      <div class="lg:col-span-8 flex flex-col">
+        {/* The Calculator Wrapper */}
+        <div class="bg-card border border-border rounded-lg shadow-sm p-6 sm:p-8 mb-6">
+          <slot />
+        </div>
+
+        {/* Ad Slot #1: Directly below calculator results */}
+        <AdSlot placement="result-below" />
+
+        {/* How It Works content slot */}
+        <div class="prose prose-slate dark:prose-invert max-w-none my-8">
+          <slot name="explanation" />
+        </div>
+
+        {/* Ad Slot #2: Mid-content */}
+        <AdSlot placement="mid-content" />
+
+        {/* FAQ Section */}
+        {tool.faq && tool.faq.length > 0 && (
+          <div class="mt-8 border-t border-border pt-8">
+            <h2 class="text-2xl font-heading font-bold mb-6">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+              {tool.faq.map((item, idx) => (
+                <div class="border border-border rounded-md bg-card p-4">
+                  <h3 class="text-base font-heading font-semibold text-foreground flex items-start gap-2">
+                    <span class="text-primary font-mono font-bold">Q.</span>
+                    <span>{item.q}</span>
+                  </h3>
+                  <p class="mt-2 text-sm text-muted leading-relaxed pl-5">
+                    {item.a}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Related Tools */}
+        {relatedTools && relatedTools.length > 0 && (
+          <div class="mt-12 border-t border-border pt-8">
+            <h2 class="text-2xl font-heading font-bold mb-6">Related Tools</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {relatedTools.map(t => (
+                <a
+                  href={`/${categorySlug}/${t.slug}/`}
+                  class="group flex flex-col justify-between p-4 rounded-lg border border-border bg-card hover:border-primary transition-all duration-150 shadow-sm"
+                >
+                  <div>
+                    <h4 class="font-heading font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-2">
+                      <Calculator class="h-4 w-4 text-muted group-hover:text-primary transition-colors" />
+                      {t.name}
+                    </h4>
+                    <p class="text-xs text-muted mt-2 line-clamp-2">
+                      {t.shortDesc}
+                    </p>
+                  </div>
+                  <span class="text-xs text-primary font-medium mt-3 inline-flex items-center gap-1">
+                    Calculate Now
+                    <ChevronRight class="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Sidebar Area */}
+      <div class="lg:col-span-4 lg:sticky lg:top-24 flex flex-col gap-6">
+        {/* Ad Slot #3: Sticky Sidebar */}
+        <AdSlot placement="sidebar-sticky" className="hidden lg:block" />
+      </div>
+
+    </div>
+  </div>
+</BaseLayout>
