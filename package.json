@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "npx tsx src/scripts/build-sitemap.ts && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "db:push": "drizzle-kit push",

@@ -1,7 +1,6 @@
 import { getCategories, getTools } from '../lib/data';
-import type { APIContext } from 'astro';
-
-export const prerender = true;
+import * as fs from 'fs';
+import * as path from 'path';
 
 function escapeXml(value: string) {
   return value
@@ -16,8 +15,8 @@ function toAbsoluteUrl(origin: string, path: string) {
   return new URL(path, origin).href;
 }
 
-export async function GET(context: APIContext) {
-  const siteOrigin = context.site?.origin ?? process.env.SITE_URL ?? 'https://toolhub-blue.vercel.app';
+async function generate() {
+  const siteOrigin = process.env.SITE_URL ?? 'https://toolhub-blue.vercel.app';
   const [categories, tools] = await Promise.all([getCategories(), getTools()]);
   const activeTools = tools.filter((tool) => (tool as { isActive?: boolean }).isActive !== false);
 
@@ -58,10 +57,16 @@ ${urls
   .join('\n')}
 </urlset>\n`;
 
-  return new Response(xml, {
-    headers: {
-      'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
-    },
-  });
+  const publicDir = path.resolve(process.cwd(), 'public');
+  if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir, { recursive: true });
+  }
+  const outputPath = path.join(publicDir, 'sitemap.xml');
+  fs.writeFileSync(outputPath, xml, 'utf8');
+  console.log(`Successfully generated static sitemap.xml in ${outputPath}`);
 }
+
+generate().catch((err) => {
+  console.error('Failed to generate sitemap:', err);
+  process.exit(1);
+});
