@@ -1,4 +1,69 @@
-export function getExplanationFor(slug: string, name: string): string {
+interface ToolExplanationInput {
+  slug: string;
+  name: string;
+  shortDesc: string;
+  introContent?: string;
+  faq?: Array<{ q: string; a: string }>;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function getCategoryAngle(categoryName: string): string {
+  switch (categoryName) {
+    case "Finance & Loans":
+      return "This type of tool is most useful when you need to compare repayment options, budget for future costs, or test how changes in rate and tenure affect the final result.";
+    case "Health & Fitness":
+      return "Health tools work best when you want a quick benchmark, a planning target, or a more practical way to monitor progress without doing the math manually.";
+    case "Education & Career":
+      return "Education tools help turn grades, credits, and attendance into numbers you can act on before deadlines or exams arrive.";
+    case "Unit & General Converters":
+      return "Converters are most useful when precision matters and you need to move between metric, imperial, or other common measurement systems without losing context.";
+    case "Math & Utility":
+      return "Math utilities are designed for repetitive calculations where speed, accuracy, and consistency matter more than building a spreadsheet from scratch.";
+    case "Real Estate":
+      return "Real estate tools help compare purchase costs, taxes, and returns so you can make decisions with a clearer financial picture.";
+    case "Business & Freelance":
+      return "Business tools are best when you need to price services, estimate margins, or plan cash flow before committing to a project.";
+    case "Insurance & IDV":
+      return "Insurance tools make it easier to estimate cover, premiums, and vehicle value so policy decisions are based on numbers instead of guesswork.";
+    case "Crypto & Stocks":
+      return "Investment tools are useful when you want to measure returns, compare valuation, or keep cost basis calculations organized.";
+    case "Text & SEO Tools":
+      return "Text and SEO tools help you shape copy for search engines, readability, and publishing workflows without leaving the browser.";
+    case "Date & Time":
+      return "Date and time tools remove friction from scheduling, deadlines, and cross-time-zone coordination.";
+    case "Automobile & Travel":
+      return "Automobile tools help you budget trips, understand loan costs, and estimate how vehicle value changes over time.";
+    case "Numerology & Names":
+      return "Numerology tools are typically used for name analysis, number reductions, and quick pattern checks for curiosity or tradition-based workflows.";
+    case "Developer & AI Tools":
+      return "Developer and AI tools are useful when you need to inspect payloads, generate secrets, or move data between formats safely and quickly.";
+    default:
+      return `This page is tuned for practical use in the ${categoryName} category, where speed and repeatability matter more than manual calculation.`;
+  }
+}
+
+function renderFaqSummary(faq?: Array<{ q: string; a: string }>): string {
+  if (!faq || faq.length === 0) {
+    return "";
+  }
+
+  return `
+    <h3>Common questions</h3>
+    <ul>
+      ${faq.slice(0, 3).map((item) => `<li><strong>${escapeHtml(item.q)}</strong> ${escapeHtml(item.a)}</li>`).join("")}
+    </ul>
+  `;
+}
+
+export function getExplanationFor(slug: string, name: string, tool?: ToolExplanationInput, categoryName = "General"): string {
   switch (slug) {
     case "emi-calculator":
       return `
@@ -173,19 +238,40 @@ export function getExplanationFor(slug: string, name: string): string {
         </div>
       `;
     default:
+      const shortDesc = escapeHtml(tool?.shortDesc || "This tool provides a fast, browser-based estimate built for everyday use.");
+      const introContent = escapeHtml(tool?.introContent || tool?.shortDesc || `Use ${name} to get a quick result without manually working through the formula.`);
+      const categoryAngle = escapeHtml(getCategoryAngle(categoryName));
+      const faqSummary = renderFaqSummary(tool?.faq);
+      const displayName = escapeHtml(name);
       return `
-        <h2>Understanding the ${name}</h2>
-        <p>The ${name} is designed to provide quick, reliable, and automated estimations based on mathematical and scientific formulas. It runs entirely inside your web browser, ensuring complete data privacy and security. None of your entered values are ever stored or sent to remote servers.</p>
+        <h2>What the ${displayName} does</h2>
+        <p>${shortDesc}</p>
+        <p>${introContent}</p>
+        <p>${displayName} is designed to turn a repeated decision or calculation into a fast, reliable workflow. It runs in the browser, so you can check values, compare scenarios, and refine inputs without sharing data with a remote service.</p>
         
-        <h3>Why Use this Calculator?</h3>
-        <p>Performing these equations manually can lead to mathematical mistakes. By using our tool, you receive instant, verified outputs backed by industry-standard calculation tables. We suggest verifying all results when utilizing them for formal financial, legal, or health purposes.</p>
+        <h3>How to use it</h3>
+        <ol>
+          <li>Enter the values that describe your situation as accurately as possible.</li>
+          <li>Choose the mode, unit, or scenario that matches your use case.</li>
+          <li>Review the main output first, then check any breakdowns or alternate results.</li>
+          <li>Adjust the inputs if you want to compare different outcomes side by side.</li>
+        </ol>
 
-        <h3>Key Features:</h3>
+        <h3>Why this page is useful</h3>
+        <p>${categoryAngle}</p>
+        <p>That makes the ${displayName} useful for planning, validation, and quick decision-making. If you are comparing options, the tool helps surface the difference between a rough estimate and a more defensible number. If you are validating a result from another source, it gives you a fast second check without leaving the page.</p>
+
+        <h3>Tips and checks</h3>
         <ul class="list-disc pl-6 space-y-2">
-          <li><strong>Instant Processing:</strong> Outputs update dynamically as you modify inputs.</li>
-          <li><strong>Offline Compatibility:</strong> Since the logic runs locally, it works even with unstable connections.</li>
-          <li><strong>SEO Responsive:</strong> Accessible across all touch devices and screen widths.</li>
+          <li><strong>Keep units consistent:</strong> Mixing metric and imperial inputs is one of the easiest ways to get misleading results.</li>
+          <li><strong>Use realistic assumptions:</strong> Small changes in rates, time, or totals can significantly affect the outcome.</li>
+          <li><strong>Compare more than one scenario:</strong> The best use of a calculator is often not one answer, but a range of answers.</li>
         </ul>
+
+        <h3>Frequently asked questions</h3>
+        ${faqSummary}
+
+        <p>When you are done, compare the output with your own expectations and, if needed, a second source. That extra check matters most when the result influences money, health, scheduling, or any decision that has real consequences.</p>
       `;
   }
 }

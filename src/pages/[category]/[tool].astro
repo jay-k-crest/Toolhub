@@ -76,7 +76,7 @@ export async function getStaticPaths() {
 const { tool, categoryName, categorySlug, relatedTools } = Astro.props;
 
 // Fetch rich 300-500 word explanation
-const htmlExplanation = getExplanationFor(tool.slug, tool.name);
+const htmlExplanation = getExplanationFor(tool.slug, tool.name, tool, categoryName);
 ---
 
 <ToolLayout

@@ -1,6 +1,7 @@
 import { getCategories, getTools } from '../lib/data';
+import type { APIContext } from 'astro';
 
-export const prerender = false;
+export const prerender = true;
 
 function escapeXml(value: string) {
   return value
@@ -15,8 +16,8 @@ function toAbsoluteUrl(origin: string, path: string) {
   return new URL(path, origin).href;
 }
 
-export async function GET({ request }: { request: Request }) {
-  const siteOrigin = process.env.SITE_URL ?? new URL(request.url).origin;
+export async function GET(context: APIContext) {
+  const siteOrigin = context.site?.origin ?? process.env.SITE_URL ?? 'https://toolhub-blue.vercel.app';
   const [categories, tools] = await Promise.all([getCategories(), getTools()]);
   const activeTools = tools.filter((tool) => (tool as { isActive?: boolean }).isActive !== false);
 
