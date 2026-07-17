@@ -6,7 +6,7 @@ import vercel from '@astrojs/vercel';
 
 // https://astro.build/config
 export default defineConfig({
-  site: process.env.SITE_URL ?? "https://toolhub-blue.vercel.app",
+  site: process.env.SITE_URL ?? "https://www.toolhubs.me",
   adapter: vercel({
     webAnalytics: {
       enabled: true,

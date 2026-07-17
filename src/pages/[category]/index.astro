@@ -16,7 +16,7 @@ const { category } = Astro.props;
 const tools = await getToolsByCategory(category.slug);
 const isSparseCategory = tools.length <= 4;
 
-const siteUrl = Astro.site ? Astro.site.origin : "https://toolhub.online";
+const siteUrl = Astro.site ? Astro.site.origin : "https://www.toolhubs.me";
 const categoryUrl = `${siteUrl}/${category.slug}/`;
 
 const breadcrumbLd = {
@@ -74,37 +74,40 @@ const displayDescription = `Free online ${category.name} calculators and web too
             No calculators are currently active in this category. Check back soon!
           </div>
         ) : (
-          <div class={isSparseCategory ? "grid grid-cols-1 sm:grid-cols-2 gap-6 justify-items-stretch mx-auto max-w-4xl" : "grid grid-cols-1 sm:grid-cols-2 gap-6"}>
-            {tools.map((tool, idx) => (
-              <>
-                <a
-                  href={`/${category.slug}/${tool.slug}/`}
-                  class={`group p-5 rounded-lg border border-border bg-card shadow-sm hover:border-primary hover:shadow-md transition-all duration-150 flex flex-col justify-between ${isSparseCategory ? "w-full" : ""}`}
-                >
-                  <div>
-                    <h3 class="font-heading font-bold text-foreground group-hover:text-primary transition-colors text-base flex items-center gap-2">
-                      <Calculator class="h-4.5 w-4.5 text-muted group-hover:text-primary transition-colors" />
-                      {tool.name}
-                    </h3>
-                    <p class="text-xs sm:text-sm text-muted mt-2 leading-relaxed">
-                      {tool.shortDesc}
-                    </p>
-                  </div>
-                  
-                  <span class="text-xs text-primary font-bold mt-4 inline-flex items-center gap-0.5">
-                    Open Calculator
-                    <ChevronRight class="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
-                  </span>
-                </a>
+          <div class="space-y-4">
+            <h2 class="text-xl font-heading font-bold text-foreground">Available {category.name} Calculators</h2>
+            <div class={isSparseCategory ? "grid grid-cols-1 sm:grid-cols-2 gap-6 justify-items-stretch mx-auto max-w-4xl" : "grid grid-cols-1 sm:grid-cols-2 gap-6"}>
+              {tools.map((tool, idx) => (
+                <>
+                  <a
+                    href={`/${category.slug}/${tool.slug}/`}
+                    class={`group p-5 rounded-lg border border-border bg-card shadow-sm hover:border-primary hover:shadow-md transition-all duration-150 flex flex-col justify-between ${isSparseCategory ? "w-full" : ""}`}
+                  >
+                    <div>
+                      <h3 class="font-heading font-bold text-foreground group-hover:text-primary transition-colors text-base flex items-center gap-2">
+                        <Calculator class="h-4.5 w-4.5 text-muted group-hover:text-primary transition-colors" />
+                        {tool.name}
+                      </h3>
+                      <p class="text-xs sm:text-sm text-muted mt-2 leading-relaxed">
+                        {tool.shortDesc}
+                      </p>
+                    </div>
+                    
+                    <span class="text-xs text-primary font-bold mt-4 inline-flex items-center gap-0.5">
+                      Open Calculator
+                      <ChevronRight class="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+                    </span>
+                  </a>
 
-                {/* Ad slot in-feed after every 6 tools */}
-                {(idx + 1) % 6 === 0 && (
-                  <div class="col-span-1 sm:col-span-2">
-                    <AdSlot placement="in-feed" />
-                  </div>
-                )}
-              </>
-            ))}
+                  {/* Ad slot in-feed after every 6 tools */}
+                  {(idx + 1) % 6 === 0 && (
+                    <div class="col-span-1 sm:col-span-2">
+                      <AdSlot placement="in-feed" />
+                    </div>
+                  )}
+                </>
+              ))}
+            </div>
           </div>
         )}
 

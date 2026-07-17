@@ -16,7 +16,7 @@ function toAbsoluteUrl(origin: string, path: string) {
 }
 
 async function generate() {
-  const siteOrigin = process.env.SITE_URL ?? 'https://toolhub-blue.vercel.app';
+  const siteOrigin = process.env.SITE_URL ?? 'https://www.toolhubs.me';
   const [categories, tools] = await Promise.all([getCategories(), getTools()]);
   const activeTools = tools.filter((tool) => (tool as { isActive?: boolean }).isActive !== false);
 
