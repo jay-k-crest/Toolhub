@@ -91,6 +91,8 @@ export function parseAIChatUniversal(rawInput: string): {
     }
   }
 
+  const looksLikeHtml = trimmed.includes("<html") || trimmed.includes("<script") || trimmed.includes("self.__next_f") || trimmed.includes("__NEXT_DATA__") || trimmed.includes("<div") || trimmed.includes("<article") || trimmed.includes("<section") || trimmed.includes("<p>") || trimmed.includes("<main") || (trimmed.includes("class=") && trimmed.includes("</"));
+
   // 2. Check for HTML with script tags, RSC React Flight streams, or embedded script JSON
   if (trimmed.includes("<html") || trimmed.includes("<script") || trimmed.includes("self.__next_f") || trimmed.includes("__NEXT_DATA__")) {
     const htmlJsonResult = extractFromHTMLScriptTags(trimmed);
@@ -100,7 +102,7 @@ export function parseAIChatUniversal(rawInput: string): {
   }
 
   // 3. Try parsing HTML DOM if elements exist
-  if (trimmed.includes("<div") || trimmed.includes("<article") || trimmed.includes("<section") || trimmed.includes("<p>") || trimmed.includes("<main") || trimmed.includes("class=")) {
+  if (looksLikeHtml) {
     const domResult = parseFromHTMLMarkup(trimmed);
     if (domResult.messages.length > 0) {
       return { ...domResult, detectedFormat: "HTML DOM Transcript" };
@@ -128,6 +130,25 @@ export function parseAIChatUniversal(rawInput: string): {
     return { ...paragraphResult, detectedFormat: "Alternating Paragraph Dialogue" };
   }
 
+  // 6b. HTML fallback: strip all tags and re-run the full text pipeline.
+  // This handles cases where the proxy returned valid HTML but the DOM selectors
+  // didn't match (e.g. ChatGPT / Claude changed their markup).
+  if (looksLikeHtml) {
+    const strippedText = stripHtmlToText(trimmed);
+    if (strippedText.length > 100) {
+      const cleanedStripped = cleanAICopyArtifacts(strippedText);
+
+      const mdR = parseFromMarkdownDialogue(cleanedStripped);
+      if (mdR.messages.length > 0) return { ...mdR, detectedFormat: "HTML Page (Markdown)" };
+
+      const lineR = parseFromLineDialogue(cleanedStripped);
+      if (lineR.messages.length > 0) return { ...lineR, detectedFormat: "HTML Page (Dialogue)" };
+
+      const paraR = parseFromAlternatingParagraphs(cleanedStripped);
+      if (paraR.messages.length > 0) return { ...paraR, detectedFormat: "HTML Page (Blocks)" };
+    }
+  }
+
   // 7. If it's plain text without speaker tags, treat as a single user prompt
   if (cleanedText.length > 0 && !cleanedText.startsWith("<")) {
     return {
@@ -150,6 +171,47 @@ export function parseAIChatUniversal(rawInput: string): {
     detectedFormat: "Unknown",
   };
 }
+
+/**
+ * Strips HTML tags and decodes entities to produce clean readable plain text.
+ * Uses DOMParser when available (browser) or a regex fallback.
+ */
+function stripHtmlToText(html: string): string {
+  // Browser path — most accurate
+  if (typeof DOMParser !== "undefined") {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      // Remove hidden/irrelevant elements
+      doc.querySelectorAll("script, style, noscript, svg, head, nav, footer, button, [aria-hidden='true']").forEach((el) => el.remove());
+      // Preserve line breaks from block elements
+      doc.querySelectorAll("br, p, div, li, h1, h2, h3, h4, h5, h6, article, section").forEach((el) => {
+        el.insertAdjacentText("afterbegin", "\n");
+      });
+      return (doc.body?.textContent || "")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+    } catch {
+      // Fall through to regex
+    }
+  }
+  // Regex fallback for SSR / non-browser environments
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/?(p|div|li|h[1-6]|article|section|blockquote)[^>]*>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 
 /**
  * Parses JSON formats from OpenAI, Anthropic, or standard array schemas

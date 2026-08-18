@@ -108,7 +108,8 @@ export async function getTools(): Promise<ToolWithActive[]> {
     try {
       const results = await db.select().from(dbTools);
       if (results.length > 0) {
-        cachedTools = results.map((r) => {
+        const dbSlugs = new Set(results.map((r) => r.slug));
+        const dbMapped = results.map((r) => {
           const fallback = toolsFallbackBySlug.get(r.slug);
           const categorySlug = r.categoryId ? (catIdToSlug.get(r.categoryId) || fallback?.categorySlug || "finance") : (fallback?.categorySlug || "finance");
           return mergeToolWithFallback({
@@ -125,7 +126,30 @@ export async function getTools(): Promise<ToolWithActive[]> {
             isActive: r.isActive,
             displayOrder: r.displayOrder,
           });
-        }).sort((a, b) => a.displayOrder - b.displayOrder);
+        });
+
+        // Merge in fallback-only tools that are not in the DB (prevents 404s for new tools)
+        const fallbackOnly = toolsFallback
+          .filter((t) => !dbSlugs.has(t.slug))
+          .map((t) => {
+            const cat = categories.find((c) => c.slug === t.categorySlug);
+            return {
+              id: undefined,
+              slug: t.slug,
+              name: t.name,
+              categoryId: cat ? cat.id : null,
+              categorySlug: t.categorySlug,
+              shortDesc: t.shortDesc,
+              metaTitle: t.metaTitle,
+              metaDescription: t.metaDescription,
+              introContent: t.introContent,
+              faq: t.faq,
+              isActive: true,
+              displayOrder: t.displayOrder,
+            } as ToolWithActive;
+          });
+
+        cachedTools = [...dbMapped, ...fallbackOnly].sort((a, b) => a.displayOrder - b.displayOrder);
         return cachedTools;
       }
     } catch (e) {

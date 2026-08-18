@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { generateJWTSecret } from "../../lib/calculators/math-calculators";
 import {
   parseAIChatUniversal,
@@ -30,18 +30,11 @@ import {
   Sparkles,
   Search,
   Trash2,
-  Upload,
   RefreshCw,
-  Eye,
-  Shield,
   Key,
   Hash,
-  Terminal,
-  Layers,
   ArrowRightLeft,
   AlertCircle,
-  FileUp,
-  ClipboardPaste,
   ExternalLink,
   Table,
 } from "lucide-react";
@@ -79,16 +72,6 @@ export default function DeveloperAiCalculators({ slug }: DeveloperAiProps) {
   const [chatSearchFilter, setChatSearchFilter] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "user" | "assistant">("all");
   const [pdfGenerating, setPdfGenerating] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const sampleDemoChat = `User: Explain quantum computing in 2 simple sentences.
-Assistant: Quantum computing uses quantum bits, or qubits, which can exist in multiple superposition states simultaneously rather than just traditional 0s and 1s. This enables quantum machines to perform complex calculations in minutes that would take classical supercomputers thousands of years.
-User: What are 3 practical real-world applications?
-Assistant: 1. **Drug Discovery & Molecular Modeling**: Simulating biological molecular interactions to accelerate life-saving medicine formulation.
-2. **Post-Quantum Cryptography**: Designing encryption algorithms resistant to quantum cryptanalysis and mathematical factorizations.
-3. **Logistics & Route Optimization**: Solving combinatorial multi-variable routing problems across global supply chains.
-User: How soon until commercial quantum advantage?
-Assistant: Specialized quantum supremacy in materials science and optimization is expected between 2027 and 2030 as fault-tolerant logical qubits scale above 1,000 physical units.`;
 
   // Fetch URL with multi-layered proxy fallback
   const fetchUrlContent = async (targetUrl: string): Promise<string> => {
@@ -146,42 +129,70 @@ Assistant: Specialized quantum supremacy in materials science and optimization i
     setIsParsing(true);
 
     let contentToParse = (overrideContent ?? chatRawContent).trim();
-    const isFromUrl = !contentToParse && Boolean(chatLink.trim());
 
-    if (isFromUrl) {
-      setIsFetchingLink(true);
+    // If there's already text in the textarea, parse it directly
+    if (contentToParse) {
       try {
-        contentToParse = await fetchUrlContent(chatLink.trim());
+        const parsed = parseAIChatUniversal(contentToParse);
+        if (parsed.messages.length === 0) {
+          setParseError(
+            "Could not detect dialogue messages. Paste a plain-text transcript in User / Assistant format, or a raw JSON export file."
+          );
+        } else {
+          setParsedChatMessages(parsed.messages);
+          setDetectedFormat(parsed.detectedFormat);
+          if (parsed.title && parsed.title !== "Shared Chat" && parsed.title !== "Exported AI Conversation" && parsed.title !== "Untitled Conversation") {
+            setChatTitle(parsed.title);
+          }
+        }
       } catch (err: any) {
-        setParseError(
-          "Could not directly fetch the chat from this link (the provider may require browser rendering or session cookies). Please open the link, select all text (Ctrl+A -> Ctrl+C), and click 'Paste Clipboard'."
-        );
-        setIsParsing(false);
-        setIsFetchingLink(false);
-        return;
+        setParseError(`Parsing error: ${err.message || "Invalid format"}`);
       } finally {
-        setIsFetchingLink(false);
+        setIsParsing(false);
       }
+      return;
     }
 
-    if (!contentToParse) {
-      setParseError("Please paste your chat transcript, enter a shared link, or upload an exported chat file (.json, .txt, .md).");
+    const linkTrimmed = chatLink.trim();
+    if (!linkTrimmed) {
+      setParseError("Please enter a shared link above or paste your chat transcript into the text box below.");
       setIsParsing(false);
       return;
     }
 
+    // ChatGPT and Claude share pages are protected by Cloudflare — any proxy
+    // fetch will return a bot-challenge page, not the real conversation.
+    // Skip the fetch and guide the user to paste manually.
+    const isChatGPT = linkTrimmed.includes("chatgpt.com") || linkTrimmed.includes("chat.openai.com");
+    const isClaude = linkTrimmed.includes("claude.ai");
+
+    if (isChatGPT || isClaude) {
+      const platform = isChatGPT ? "ChatGPT" : "Claude";
+      setParseError(
+        `${platform} share pages are protected by Cloudflare and cannot be fetched directly. ` +
+        `Open the link, select all text (Ctrl+A / Cmd+A), copy (Ctrl+C), then paste it into the text box below and click Parse again.`
+      );
+      setIsParsing(false);
+      return;
+    }
+
+    // For other links, attempt fetch via our server-side proxy
+    setIsFetchingLink(true);
     try {
-      const parsed = parseAIChatUniversal(contentToParse);
+      const fetched = await fetchUrlContent(linkTrimmed);
+      if (!fetched || fetched.trim().length < 50) {
+        setParseError("The fetched content was empty or too short. Try pasting the text directly.");
+        setIsParsing(false);
+        setIsFetchingLink(false);
+        return;
+      }
+
+      const parsed = parseAIChatUniversal(fetched);
       if (parsed.messages.length === 0) {
-        if (isFromUrl) {
-          setParseError(
-            "The link was reached, but the conversation text is rendered client-side by your browser. Please open the link, select all text (Ctrl+A -> Ctrl+C), and click 'Paste Clipboard'."
-          );
-        } else {
-          setParseError(
-            "Could not detect dialogue messages from the provided input. Please paste your chat transcript, markdown dialogue, or JSON file."
-          );
-        }
+        setParseError(
+          "The link was reached but no conversation dialogue was found in the response. " +
+          "Try opening the link, copying all text (Ctrl+A → Ctrl+C), and pasting it below."
+        );
       } else {
         setParsedChatMessages(parsed.messages);
         setDetectedFormat(parsed.detectedFormat);
@@ -190,39 +201,14 @@ Assistant: Specialized quantum supremacy in materials science and optimization i
         }
       }
     } catch (err: any) {
-      setParseError(`Parsing error: ${err.message || "Invalid format"}`);
+      setParseError(
+        "Could not fetch this link (possible CORS restriction). " +
+        "Try opening the link, copying all text (Ctrl+A → Ctrl+C), and pasting it below."
+      );
     } finally {
+      setIsFetchingLink(false);
       setIsParsing(false);
     }
-  };
-
-  const handlePasteFromClipboard = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (!text || text.trim() === "") {
-        setParseError("Clipboard is empty. Please copy your AI conversation text first.");
-        return;
-      }
-      setChatRawContent(text);
-      setParseError("");
-      handleParseChat(text);
-    } catch (e) {
-      setParseError("Clipboard access blocked by browser. Please manually paste with Ctrl+V into the text area below.");
-    }
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result as string;
-      setChatRawContent(content);
-      setChatTitle(file.name.replace(/\.[^/.]+$/, ""));
-      handleParseChat(content);
-    };
-    reader.readAsText(file);
   };
 
   const deleteMessage = (id: string) => {
@@ -243,8 +229,10 @@ Assistant: Specialized quantum supremacy in materials science and optimization i
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
   };
 
   const handleDownloadPDF = async () => {
@@ -366,31 +354,10 @@ console.log(greeting);
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Input Column */}
             <div className="lg:col-span-6 space-y-4 bg-card border border-border p-6 rounded-2xl shadow-xs">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                  <FileUp className="h-4 w-4 text-primary" />
-                  Import AI Conversation
-                </h3>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={handlePasteFromClipboard}
-                    className="text-xs text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-                    title="Paste from clipboard"
-                  >
-                    <ClipboardPaste className="h-3.5 w-3.5" /> Paste Clipboard
-                  </button>
-                  <button
-                    onClick={() => {
-                      setChatRawContent(sampleDemoChat);
-                      setChatTitle("Quantum Computing Architecture");
-                      handleParseChat(sampleDemoChat);
-                    }}
-                    className="text-xs text-muted hover:text-foreground font-medium flex items-center gap-1 cursor-pointer"
-                  >
-                    <Sparkles className="h-3 w-3" /> Load Sample
-                  </button>
-                </div>
-              </div>
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                <Download className="h-4 w-4 text-primary" />
+                Import AI Conversation
+              </h3>
 
               {/* Title Input */}
               <div className="space-y-1.5">
@@ -420,7 +387,7 @@ console.log(greeting);
                       rel="noopener noreferrer"
                       className="text-[11px] text-primary hover:underline flex items-center gap-1 font-semibold"
                     >
-                      <ExternalLink className="h-3 w-3" /> Open in New Tab
+                      <ExternalLink className="h-3 w-3" /> Open Link
                     </a>
                   )}
                 </div>
@@ -436,116 +403,65 @@ console.log(greeting);
                   className="w-full rounded-lg border border-input bg-card px-3.5 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
 
-                {/* Helper notice for Claude and ChatGPT client-rendered links */}
-                {chatLink.trim().length > 10 && (chatLink.includes("claude.ai") || chatLink.includes("chatgpt.com")) && (
-                  <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl text-xs space-y-2">
-                    <p className="text-foreground font-medium">
-                      💡 <strong>Quick Export Tip for Claude & ChatGPT links:</strong>
+                {/* Cloudflare-protection notice for ChatGPT / Claude */}
+                {chatLink.trim().length > 10 && (chatLink.includes("claude.ai") || chatLink.includes("chatgpt.com") || chatLink.includes("chat.openai.com")) && (
+                  <div className="p-3 bg-amber-500/8 border border-amber-500/25 rounded-xl text-xs space-y-2">
+                    <p className="text-foreground font-semibold flex items-center gap-1.5">
+                      ⚠️ {chatLink.includes("claude.ai") ? "Claude" : "ChatGPT"} blocks automated access (Cloudflare)
                     </p>
                     <p className="text-muted leading-relaxed">
-                      Claude and ChatGPT render conversation text in the browser. To import this chat instantly:
-                      open your link, select all (<kbd className="px-1 py-0.5 bg-secondary border border-border rounded text-[10px]">Ctrl+A</kbd> / <kbd className="px-1 py-0.5 bg-secondary border border-border rounded text-[10px]">Cmd+A</kbd>), copy (<kbd className="px-1 py-0.5 bg-secondary border border-border rounded text-[10px]">Ctrl+C</kbd>), and click below.
+                      Paste the conversation text below instead — it takes 3 steps:
                     </p>
-                    <div className="flex items-center gap-2 pt-1">
-                      <button
-                        onClick={handlePasteFromClipboard}
-                        className="py-1.5 px-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/95 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
-                      >
-                        <ClipboardPaste className="h-3.5 w-3.5" /> 1-Click Paste Clipboard
-                      </button>
-                      <a
-                        href={chatLink.trim()}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="py-1.5 px-3 rounded-lg border border-border bg-card hover:bg-secondary text-xs font-semibold text-foreground flex items-center gap-1"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" /> Open Chat Page
-                      </a>
-                    </div>
+                    <ol className="text-muted leading-relaxed list-none space-y-1 pl-1">
+                      <li><span className="font-bold text-foreground">1.</span> Open the link →</li>
+                      <li><span className="font-bold text-foreground">2.</span> Select all text <kbd className="px-1 py-0.5 bg-secondary border border-border rounded text-[10px]">Ctrl+A</kbd> then copy <kbd className="px-1 py-0.5 bg-secondary border border-border rounded text-[10px]">Ctrl+C</kbd></li>
+                      <li><span className="font-bold text-foreground">3.</span> Paste into the box below <kbd className="px-1 py-0.5 bg-secondary border border-border rounded text-[10px]">Ctrl+V</kbd> → click Parse</li>
+                    </ol>
+                    <a
+                      href={chatLink.trim()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-border bg-card hover:bg-secondary text-xs font-semibold text-foreground mt-1"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" /> Open Chat Page →
+                    </a>
                   </div>
                 )}
               </div>
 
               {/* Raw Content Textarea */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="chat-raw-input" className="text-xs font-medium text-foreground">
-                    Paste Chat Text / Transcript / JSON / Markdown
-                  </label>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-[11px] text-primary font-semibold hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <Upload className="h-3 w-3" /> Upload File (.json, .txt, .md, .html)
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".json,.txt,.md,.html"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                  />
-                </div>
+                <label htmlFor="chat-raw-input" className="text-xs font-medium text-foreground">
+                  Or paste chat transcript directly
+                </label>
                 <textarea
                   id="chat-raw-input"
                   value={chatRawContent}
                   onChange={(e) => setChatRawContent(e.target.value)}
-                  rows={8}
-                  placeholder={`Paste conversation dialogue here:
-- ChatGPT / Claude / Gemini / DeepSeek plain text transcripts
-- OpenAI conversations.json or Claude data export files
-- Markdown format (User: ... / Assistant: ...)
-- Web HTML content`}
+                  rows={7}
+                  placeholder={`Paste conversation text here — supports:\n• Plain text (User: ... / Assistant: ...)\n• ChatGPT / Claude / Gemini transcripts\n• OpenAI conversations.json exports\n• Markdown dialogue format`}
                   className="w-full rounded-lg border border-input bg-secondary/30 px-3.5 py-2.5 text-xs font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-ring leading-relaxed"
                 />
               </div>
 
-              {/* Bookmarklet Quick-Export Guide */}
-              <div className="p-3 bg-secondary/40 border border-border rounded-xl text-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-foreground flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-primary" /> Browser Bookmarklet (Instant Export)
-                  </span>
-                  <button
-                    onClick={() => {
-                      const code = `javascript:(function(){try{let title=document.title.replace(/[-|]\\s*(ChatGPT|Claude|Gemini).*$/i,'').trim()||'AI Conversation';let text='';let articles=document.querySelectorAll('article,[data-testid^="conversation-turn"]');if(articles.length>0){articles.forEach((art)=>{let isUser=art.querySelector('[data-message-author-role="user"]')||art.textContent.includes('You said:');let role=isUser?'User':'Assistant';let body=art.querySelector('.markdown,.whitespace-pre-wrap,[class*="text-message"]')||art;text+='\\n\\n### '+role+'\\n'+(body.innerText||body.textContent).trim()+'\\n';});}else{let turns=document.querySelectorAll('.font-claude-message,[class*="font-claude"],[data-testid*="conversation-turn"],.prose');if(turns.length>0){turns.forEach((t,i)=>{let role=i%2===0?'User':'Assistant';text+='\\n\\n### '+role+'\\n'+(t.innerText||t.textContent).trim()+'\\n';});}else{text=window.getSelection().toString()||document.body.innerText;}}if(navigator.clipboard){navigator.clipboard.writeText(text.trim()).then(()=>{alert('Chat copied! Switch to ToolHub and click Paste Clipboard.');});}else{alert('Copied');}}catch(e){alert(e.message);}})();`;
-                      navigator.clipboard.writeText(code);
-                      alert("Bookmarklet code copied to clipboard! Create a browser bookmark and paste this code as the URL.");
-                    }}
-                    className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-                  >
-                    <Copy className="h-3 w-3" /> Copy Bookmarklet Code
-                  </button>
-                </div>
-                <p className="text-muted text-[11px] leading-relaxed">
-                  How it works: Open-source AI exporters run directly in your active chat tab where your browser has access to the conversation. Click the bookmarklet on any ChatGPT or Claude page to instantly copy the formatted chat.
-                </p>
-              </div>
-
               {parseError && (
-                <div className="p-3.5 bg-destructive/10 border border-destructive/20 text-destructive rounded-xl text-xs font-medium space-y-2">
+                <div className="p-3.5 bg-destructive/10 border border-destructive/20 text-destructive rounded-xl text-xs font-medium">
                   <div className="flex items-start gap-2">
                     <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                    <span>{parseError}</span>
+                    <span className="leading-relaxed">{parseError}</span>
                   </div>
-                  <div className="pl-6 pt-1 flex flex-wrap gap-2">
-                    <button
-                      onClick={handlePasteFromClipboard}
-                      className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <ClipboardPaste className="h-3.5 w-3.5" /> 1-Click Paste from Clipboard
-                    </button>
-                    {chatLink.trim().startsWith("http") && (
+                  {chatLink.trim().startsWith("http") && (
+                    <div className="pl-6 pt-2">
                       <a
                         href={chatLink.trim()}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-xs font-semibold text-foreground flex items-center gap-1.5"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-xs font-semibold text-foreground"
                       >
                         <ExternalLink className="h-3.5 w-3.5" /> Open Chat Page
                       </a>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 
