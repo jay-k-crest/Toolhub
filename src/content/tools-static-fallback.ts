@@ -796,6 +796,20 @@ export const toolsFallback: ToolFallback[] = [
     ],
     displayOrder: 50,
   },
+  {
+    slug: "color-converter",
+    name: "Color Converter & Contrast Checker",
+    categorySlug: "converters",
+    shortDesc: "Convert between HEX, RGB, HSL, CMYK and check WCAG 2.1 accessibility contrast scores.",
+    metaTitle: "Color Converter & WCAG Contrast Checker — HEX, RGB, HSL",
+    metaDescription: "Convert color formats between HEX, RGB, HSL, and CMYK with live preview and calculate WCAG 2.1 color contrast accessibility compliance.",
+    introContent: "Convert color codes across design formats and check contrast ratios against white and black backgrounds for accessibility compliance.",
+    faq: [
+      { q: "What is WCAG 2.1 AA vs AAA?", a: "WCAG AA requires a contrast ratio of at least 4.5:1 for normal text, while AAA requires 7:1 for enhanced readability." },
+      { q: "What color formats are supported?", a: "HEX, RGB, HSL, and CMYK color spaces are converted bi-directionally." }
+    ],
+    displayOrder: 51,
+  },
 
   // MATH & UTILITY
   {
@@ -1250,6 +1264,20 @@ export const toolsFallback: ToolFallback[] = [
     ],
     displayOrder: 84,
   },
+  {
+    slug: "url-encoder-decoder",
+    name: "URL Encoder & Parameter Parser",
+    categorySlug: "seo-text",
+    shortDesc: "Encode or decode URLs, percent-encoded URI strings, and inspect query parameters.",
+    metaTitle: "URL Encoder & Decoder — Parse and Format Query Parameters",
+    metaDescription: "Encode and decode special characters in web URLs, parse query parameters into structured tables, and format URI components.",
+    introContent: "Encode URLs for safe HTTP transmission, decode percent-encoded strings (%20, %3F), and inspect complex query parameters in one clean interface.",
+    faq: [
+      { q: "What is URL encoding?", a: "URL encoding converts characters into format that can be transmitted over the Internet using '%' followed by two hexadecimal digits." },
+      { q: "When should I encode URI components?", a: "Encode query string parameter values containing spaces, ampersands, hashes, or non-ASCII characters to avoid breaking URL structure." }
+    ],
+    displayOrder: 85,
+  },
 
   // DATE & TIME
   {
@@ -1362,15 +1390,16 @@ export const toolsFallback: ToolFallback[] = [
   },
   {
     slug: "ai-chat-to-json",
-    name: "AI Chat Exporter",
+    name: "AI Chat Multi-Format Exporter",
     categorySlug: "developer-ai",
-    shortDesc: "Export public shared AI chats (ChatGPT, Claude, xAI) into a downloadable structured JSON file.",
-    metaTitle: "AI Chat Exporter — Convert Public AI Shared Link to JSON",
-    metaDescription: "Convert public shared conversation links from ChatGPT, Claude, and xAI into clean, downloadable JSON structures instantly.",
-    introContent: "Enter a public shared link from any major AI chat platform to parse the conversation thread and download it as structured JSON data.",
+    shortDesc: "Export ChatGPT, Claude, and Gemini chats to clean JSON, Markdown, PDF, CSV, and Plain Text files.",
+    metaTitle: "AI Chat Exporter — Convert AI Chats to JSON, Markdown, PDF",
+    metaDescription: "Universal AI chat exporter. Parse ChatGPT, Claude, and Gemini transcripts and export cleanly into JSON, Markdown, PDF, Plain Text, or CSV formats.",
+    introContent: "Import chat transcripts, OpenAI/Claude export files, or public links to view, filter, edit, and export conversations to JSON, Markdown (.md), PDF, or CSV.",
     faq: [
-      { q: "Which platforms are supported?", a: "ChatGPT, Claude, and xAI share links. You can also paste raw HTML or transcript text if CORS blocks direct fetches." },
-      { q: "Is my data private?", a: "Yes. All parsing happens entirely in your browser; no links or conversation content are ever sent to our servers." }
+      { q: "Which formats can I export to?", a: "You can download your structured conversation as JSON (.json), Markdown (.md), PDF document, Plain Text (.txt), CSV spreadsheet, or HTML." },
+      { q: "Is my conversation private?", a: "Yes. 100% of the parsing and document rendering occurs entirely in your browser without transmitting your chats to external servers." },
+      { q: "What chat platforms are supported?", a: "ChatGPT (Next.js data exports, share links), Claude exports, Gemini transcripts, DeepSeek transcripts, and plain dialogue formats." }
     ],
     displayOrder: 93,
   },
@@ -1387,5 +1416,61 @@ export const toolsFallback: ToolFallback[] = [
       { q: "How are these keys generated?", a: "The tool uses your browser's window.crypto API for cryptographically secure pseudo-random number generation." }
     ],
     displayOrder: 94,
+  },
+  {
+    slug: "json-formatter",
+    name: "JSON Formatter & Validator",
+    categorySlug: "developer-ai",
+    shortDesc: "Format, pretty-print, validate, minify, and detect syntax errors in JSON documents.",
+    metaTitle: "JSON Formatter & Validator — Beautify, Minify, and Lint JSON",
+    metaDescription: "Format and beautify messy JSON strings with custom indentation, validate JSON syntax with error pointers, minify for production, and inspect object statistics.",
+    introContent: "Paste JSON payloads to validate syntax, format with custom 2-space or 4-space indentation, pinpoint syntax error lines, and copy minified strings.",
+    faq: [
+      { q: "Can this tool fix invalid JSON?", a: "The validator pinpoints the exact line and column of syntax errors like trailing commas, unquoted keys, or mismatched brackets." },
+      { q: "Is my JSON payload kept secure?", a: "Yes. Processing runs entirely in browser memory; no JSON is uploaded over network connections." }
+    ],
+    displayOrder: 95,
+  },
+  {
+    slug: "base64-encoder-decoder",
+    name: "Base64 Encoder & Decoder",
+    categorySlug: "developer-ai",
+    shortDesc: "Encode strings to Base64 (Standard & URL-safe) and decode Base64 data instantly.",
+    metaTitle: "Base64 Encoder & Decoder — Convert Text to Base64 Online",
+    metaDescription: "Convert plain text to Base64 format and decode Base64 payloads. Supports RFC 4648 URL-safe Base64 and shows character/byte counters.",
+    introContent: "Encode and decode Base64 data with UTF-8 support and URL-safe format options for web tokens and API headers.",
+    faq: [
+      { q: "What is URL-safe Base64?", a: "URL-safe Base64 replaces '+' with '-' and '/' with '_', and strips padding '=' characters so the string can be safely placed in URLs." },
+      { q: "Does this handle Unicode / UTF-8?", a: "Yes, our engine properly encodes multi-byte UTF-8 characters including emojis." }
+    ],
+    displayOrder: 96,
+  },
+  {
+    slug: "hash-generator",
+    name: "Hash & Checksum Generator",
+    categorySlug: "developer-ai",
+    shortDesc: "Generate SHA-256, SHA-512, SHA-1, MD5, and HMAC cryptographic hashes.",
+    metaTitle: "Hash Generator — Calculate SHA-256, SHA-512, MD5, HMAC Online",
+    metaDescription: "Generate cryptographic hashes (SHA-256, SHA-512, SHA-1, MD5, HMAC) from strings in real time using the high-performance Web Crypto API.",
+    introContent: "Compute cryptographic hashes and message authentication codes (HMAC) using native Web Crypto hardware-accelerated algorithms.",
+    faq: [
+      { q: "Which hash algorithm is recommended for security?", a: "SHA-256 and SHA-512 are current industry cryptographic standards. MD5 and SHA-1 should only be used for non-cryptographic checksum verification." },
+      { q: "What is an HMAC?", a: "A Hash-based Message Authentication Code (HMAC) uses a secret key combined with a cryptographic hash function to verify data integrity and authenticity." }
+    ],
+    displayOrder: 97,
+  },
+  {
+    slug: "markdown-previewer",
+    name: "Markdown to HTML Live Converter",
+    categorySlug: "developer-ai",
+    shortDesc: "Write Markdown with live rendered preview and export to styled HTML documents.",
+    metaTitle: "Markdown to HTML Live Converter — Preview & Export Markdown",
+    metaDescription: "Live interactive Markdown editor and previewer. Convert GitHub Flavored Markdown (GFM) to clean HTML and download formatted documents.",
+    introContent: "Write GitHub Flavored Markdown with instant live side-by-side preview, clean typography, code block formatting, and one-click HTML / Markdown download.",
+    faq: [
+      { q: "Does this support code blocks and tables?", a: "Yes, standard Markdown syntax including headings, blockquotes, bold/italic text, lists, links, and fenced code blocks is supported." },
+      { q: "Can I download the HTML output?", a: "Yes, you can copy the raw HTML code or download a standalone self-contained .html document." }
+    ],
+    displayOrder: 98,
   }
 ];

@@ -101,6 +101,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.toolhubs.me/converters/color-converter/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.toolhubs.me/converters/data-storage-converter/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -191,7 +196,27 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.toolhubs.me/developer-ai/base64-encoder-decoder/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.toolhubs.me/developer-ai/hash-generator/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.toolhubs.me/developer-ai/json-formatter/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.toolhubs.me/developer-ai/jwt-secret-generator/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.toolhubs.me/developer-ai/markdown-previewer/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -557,6 +582,11 @@
   </url>
   <url>
     <loc>https://www.toolhubs.me/seo-text/text-to-slug-converter/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.toolhubs.me/seo-text/url-encoder-decoder/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

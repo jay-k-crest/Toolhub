@@ -16,7 +16,7 @@
   "dependencies": {
     "@astrojs/react": "^6.0.1",
     "@astrojs/sitemap": "^3.7.3",
-    "@astrojs/vercel": "^11.0.3",
+    "@astrojs/vercel": "^11.0.5",
     "@fontsource/inter": "^5.2.8",
     "@fontsource/manrope": "^5.2.8",
     "@neondatabase/serverless": "^1.1.0",
@@ -48,5 +48,8 @@
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.2",
     "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.12"
   }
 }

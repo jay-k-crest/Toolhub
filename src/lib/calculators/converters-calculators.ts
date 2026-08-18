@@ -9,22 +9,50 @@ export function convertTimeZone(
   toZone: string
 ): string {
   try {
-    const fromDate = new Date(dateTimeStr);
-    if (isNaN(fromDate.getTime())) return "Invalid Date";
-    
-    // Format using Intl.DateTimeFormat
-    const formatter = new Intl.DateTimeFormat("en-US", {
+    if (!dateTimeStr) return "Please select date and time";
+    const [datePart, timePart] = dateTimeStr.split("T");
+    if (!datePart || !timePart) return "Invalid Date Format";
+    const [year, month, day] = datePart.split("-").map(Number);
+    const [hour, minute] = timePart.split(":").map(Number);
+
+    const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
+
+    const fromFormatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: fromZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+
+    const parts = fromFormatter.formatToParts(utcDate);
+    const partMap: Record<string, number> = {};
+    parts.forEach((p) => {
+      if (p.type !== "literal") partMap[p.type] = Number(p.value);
+    });
+
+    const fromAsUtc = Date.UTC(partMap.year, partMap.month - 1, partMap.day, (partMap.hour || 0) % 24, partMap.minute || 0, 0);
+    const offsetDiff = fromAsUtc - utcDate.getTime();
+    const actualUtcTime = utcDate.getTime() - offsetDiff;
+    const finalDate = new Date(actualUtcTime);
+
+    const toFormatter = new Intl.DateTimeFormat("en-US", {
       timeZone: toZone,
+      weekday: "short",
       year: "numeric",
       month: "short",
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-      hour12: true
+      hour12: true,
+      timeZoneName: "short",
     });
-    
-    return formatter.format(fromDate);
+
+    return toFormatter.format(finalDate);
   } catch (e) {
     return "Unsupported Time Zone";
   }

@@ -121,7 +121,7 @@ const htmlExplanation = getExplanationFor(tool.slug, tool.name, tool, categoryNa
   {["cgpa-to-percentage-converter", "grade-calculator", "attendance-percentage-calculator", "salary-hike-percentage-calculator", "notice-period-calculator"].includes(tool.slug) && (
     <EducationCalculators client:load slug={tool.slug} />
   )}
-  {["time-zone-converter", "date-difference-calculator", "age-in-days-calculator", "number-to-words-converter", "roman-numeral-converter", "data-storage-converter", "speed-converter"].includes(tool.slug) && (
+  {["time-zone-converter", "date-difference-calculator", "age-in-days-calculator", "number-to-words-converter", "roman-numeral-converter", "data-storage-converter", "speed-converter", "color-converter"].includes(tool.slug) && (
     <ConvertersCalculators client:load slug={tool.slug} />
   )}
   {["percentage-increase-calculator", "ratio-calculator", "average-calculator", "standard-deviation-calculator", "fraction-calculator", "random-number-generator", "password-generator", "word-counter"].includes(tool.slug) && (
@@ -139,7 +139,7 @@ const htmlExplanation = getExplanationFor(tool.slug, tool.name, tool, categoryNa
   {["crypto-profit-calculator", "stock-dca-calculator", "dividend-yield-calculator", "pe-ratio-calculator"].includes(tool.slug) && (
     <CryptoStocksCalculators client:load slug={tool.slug} />
   )}
-  {["case-converter", "text-to-slug-converter", "lorem-ipsum-generator", "reading-time-calculator", "meta-tag-length-checker", "qr-code-generator"].includes(tool.slug) && (
+  {["case-converter", "text-to-slug-converter", "lorem-ipsum-generator", "reading-time-calculator", "meta-tag-length-checker", "qr-code-generator", "url-encoder-decoder"].includes(tool.slug) && (
     <SeoTextCalculators client:load slug={tool.slug} />
   )}
   {["countdown-timer", "working-days-calculator", "timezone-meeting-planner"].includes(tool.slug) && (
@@ -151,7 +151,7 @@ const htmlExplanation = getExplanationFor(tool.slug, tool.name, tool, categoryNa
   {["numerology-calculator", "baby-name-numerology-generator"].includes(tool.slug) && (
     <AstrologyCalculators client:load slug={tool.slug} />
   )}
-  {["jwt-secret-generator", "ai-chat-to-json"].includes(tool.slug) && (
+  {["jwt-secret-generator", "ai-chat-to-json", "json-formatter", "base64-encoder-decoder", "hash-generator", "markdown-previewer"].includes(tool.slug) && (
     <DeveloperAiCalculators client:load slug={tool.slug} />
   )}
   
@@ -159,16 +159,17 @@ const htmlExplanation = getExplanationFor(tool.slug, tool.name, tool, categoryNa
   {!["emi-calculator", "bmi-calculator", "gpa-calculator", "percentage-calculator", "unit-converter", "scientific-calculator", "sip-calculator", "sip-step-up-calculator", "lumpsum-calculator", "fd-calculator", "rd-calculator", "compound-interest-calculator", "simple-interest-calculator", "inflation-calculator", "salary-to-in-hand-calculator", "gst-calculator", "ppf-calculator", "hra-calculator", "gratuity-calculator", "epf-calculator", "capital-gains-tax-calculator", "loan-eligibility-calculator", "loan-prepayment-calculator", "rent-vs-buy-calculator", "retirement-corpus-calculator", "credit-card-interest-calculator", "net-worth-calculator", "business-loan-emi-calculator", "currency-converter", "income-tax-calculator",
     "calorie-calculator", "body-fat-calculator", "ideal-weight-calculator", "water-intake-calculator", "pregnancy-due-date-calculator", "ovulation-calculator", "age-calculator", "heart-rate-zone-calculator", "macro-calculator",
     "cgpa-to-percentage-converter", "grade-calculator", "attendance-percentage-calculator", "salary-hike-percentage-calculator", "notice-period-calculator",
-    "time-zone-converter", "date-difference-calculator", "age-in-days-calculator", "number-to-words-converter", "roman-numeral-converter", "data-storage-converter", "speed-converter",
-    "percentage-increase-calculator", "ratio-calculator", "average-calculator", "standard-deviation-calculator", "fraction-calculator", "random-number-generator", "password-generator", "word-counter", "jwt-secret-generator",
+    "time-zone-converter", "date-difference-calculator", "age-in-days-calculator", "number-to-words-converter", "roman-numeral-converter", "data-storage-converter", "speed-converter", "color-converter",
+    "percentage-increase-calculator", "ratio-calculator", "average-calculator", "standard-deviation-calculator", "fraction-calculator", "random-number-generator", "password-generator", "word-counter",
     "home-loan-affordability-calculator", "stamp-duty-calculator", "property-tax-calculator", "rental-yield-calculator",
     "freelance-rate-calculator", "invoice-generator", "break-even-calculator", "profit-margin-calculator", "markup-calculator", "roi-calculator", "cagr-calculator",
     "term-insurance-calculator", "life-insurance-calculator", "car-insurance-idv-calculator", "health-insurance-calculator",
     "crypto-profit-calculator", "stock-dca-calculator", "dividend-yield-calculator", "pe-ratio-calculator",
-    "case-converter", "text-to-slug-converter", "lorem-ipsum-generator", "reading-time-calculator", "meta-tag-length-checker", "qr-code-generator", "ai-chat-to-json",
+    "case-converter", "text-to-slug-converter", "lorem-ipsum-generator", "reading-time-calculator", "meta-tag-length-checker", "qr-code-generator", "url-encoder-decoder",
     "countdown-timer", "working-days-calculator", "timezone-meeting-planner",
     "car-loan-emi-calculator", "fuel-cost-calculator", "car-depreciation-calculator",
-    "numerology-calculator", "baby-name-numerology-generator"
+    "numerology-calculator", "baby-name-numerology-generator",
+    "jwt-secret-generator", "ai-chat-to-json", "json-formatter", "base64-encoder-decoder", "hash-generator", "markdown-previewer"
   ].includes(tool.slug) && (
     <FallbackCalculator client:load name={tool.name} />
   )}

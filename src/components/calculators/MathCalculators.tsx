@@ -634,10 +634,26 @@ export default function MathCalculators({ slug }: MathProps) {
             {activeSlug === "password-generator" && (
               <div className="space-y-4">
                 <div>
-                  <span className="text-xs text-muted block uppercase tracking-wider mb-2">Generated Password</span>
-                  <div className="bg-card border border-border rounded-md px-3 py-2 text-sm font-semibold select-all font-mono break-all text-primary">
-                    {passResult || "Click generate button"}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-muted block uppercase tracking-wider">Generated Password</span>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">
+                      Entropy Score: {passLen >= 16 ? "Strong" : passLen >= 10 ? "Moderate" : "Weak"}
+                    </span>
                   </div>
+                  <div className="bg-card border border-border rounded-md px-3.5 py-3 text-sm font-semibold select-all font-mono break-all text-primary">
+                    {passResult || generateSecurePassword(passLen, passUpper, passLower, passNum, passSym)}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const textToCopy = passResult || generateSecurePassword(passLen, passUpper, passLower, passNum, passSym);
+                      navigator.clipboard.writeText(textToCopy);
+                      setPassResult(textToCopy);
+                      alert("Password copied to clipboard!");
+                    }}
+                    className="mt-3 w-full py-2 px-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/95 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                  >
+                    Copy Password
+                  </button>
                 </div>
               </div>
             )}

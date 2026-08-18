@@ -21,6 +21,7 @@ export const unitCategories: Record<string, {
       { value: "foot", label: "Feet (ft)", factor: 0.3048 },
       { value: "yard", label: "Yards (yd)", factor: 0.9144 },
       { value: "mile", label: "Miles (mi)", factor: 1609.344 },
+      { value: "nautical_mile", label: "Nautical Miles (NM)", factor: 1852 },
     ],
   },
   weight: {
@@ -30,8 +31,10 @@ export const unitCategories: Record<string, {
       { value: "kg", label: "Kilograms (kg)", factor: 1 },
       { value: "g", label: "Grams (g)", factor: 0.001 },
       { value: "mg", label: "Milligrams (mg)", factor: 0.000001 },
+      { value: "metric_ton", label: "Metric Tonnes (t)", factor: 1000 },
       { value: "pound", label: "Pounds (lbs)", factor: 0.45359237 },
       { value: "ounce", label: "Ounces (oz)", factor: 0.028349523 },
+      { value: "carat", label: "Carats (ct)", factor: 0.0002 },
     ],
   },
   area: {
@@ -45,6 +48,7 @@ export const unitCategories: Record<string, {
       { value: "inch2", label: "Square Inches (in²)", factor: 0.00064516 },
       { value: "acre", label: "Acres (ac)", factor: 4046.8564224 },
       { value: "hectare", label: "Hectares (ha)", factor: 10000 },
+      { value: "sq_yard", label: "Square Yards (yd²)", factor: 0.836127 },
     ],
   },
   volume: {
@@ -55,8 +59,11 @@ export const unitCategories: Record<string, {
       { value: "ml", label: "Milliliters (mL)", factor: 0.001 },
       { value: "m3", label: "Cubic Meters (m³)", factor: 1000 },
       { value: "gallon", label: "Gallons (US gal)", factor: 3.78541178 },
+      { value: "gallon_uk", label: "Gallons (UK gal)", factor: 4.54609 },
       { value: "quart", label: "Quarts (US qt)", factor: 0.946352946 },
+      { value: "pint", label: "Pints (US pt)", factor: 0.473176473 },
       { value: "cup", label: "Cups (US cup)", factor: 0.24 },
+      { value: "fluid_oz", label: "Fluid Ounces (fl oz)", factor: 0.0295735 },
     ],
   },
   temperature: {
@@ -66,6 +73,56 @@ export const unitCategories: Record<string, {
       { value: "c", label: "Celsius (°C)", factor: 1 },
       { value: "f", label: "Fahrenheit (°F)", factor: 1 },
       { value: "k", label: "Kelvin (K)", factor: 1 },
+    ],
+  },
+  speed: {
+    label: "Speed",
+    baseUnit: "mps",
+    units: [
+      { value: "kmh", label: "Kilometers per hour (km/h)", factor: 1 / 3.6 },
+      { value: "mph", label: "Miles per hour (mph)", factor: 0.44704 },
+      { value: "mps", label: "Meters per second (m/s)", factor: 1 },
+      { value: "knot", label: "Knots (kt)", factor: 0.514444 },
+      { value: "fps", label: "Feet per second (ft/s)", factor: 0.3048 },
+    ],
+  },
+  time: {
+    label: "Time",
+    baseUnit: "s",
+    units: [
+      { value: "ms", label: "Milliseconds (ms)", factor: 0.001 },
+      { value: "s", label: "Seconds (s)", factor: 1 },
+      { value: "min", label: "Minutes (min)", factor: 60 },
+      { value: "hour", label: "Hours (h)", factor: 3600 },
+      { value: "day", label: "Days (d)", factor: 86400 },
+      { value: "week", label: "Weeks (wk)", factor: 604800 },
+      { value: "year", label: "Years (yr)", factor: 31536000 },
+    ],
+  },
+  digital: {
+    label: "Data Storage",
+    baseUnit: "b",
+    units: [
+      { value: "b", label: "Bits (b)", factor: 1 },
+      { value: "B", label: "Bytes (B)", factor: 8 },
+      { value: "KB", label: "Kilobytes (KB)", factor: 8 * 1000 },
+      { value: "MB", label: "Megabytes (MB)", factor: 8 * 1000 * 1000 },
+      { value: "GB", label: "Gigabytes (GB)", factor: 8 * 1000 * 1000 * 1000 },
+      { value: "TB", label: "Terabytes (TB)", factor: 8 * 1000 * 1000 * 1000 * 1000 },
+      { value: "KiB", label: "Kibibytes (KiB - Binary)", factor: 8 * 1024 },
+      { value: "MiB", label: "Mebibytes (MiB - Binary)", factor: 8 * 1024 * 1024 },
+      { value: "GiB", label: "Gibibytes (GiB - Binary)", factor: 8 * 1024 * 1024 * 1024 },
+    ],
+  },
+  pressure: {
+    label: "Pressure",
+    baseUnit: "pa",
+    units: [
+      { value: "pa", label: "Pascals (Pa)", factor: 1 },
+      { value: "kpa", label: "Kilopascals (kPa)", factor: 1000 },
+      { value: "bar", label: "Bar (bar)", factor: 100000 },
+      { value: "psi", label: "Pounds per sq inch (psi)", factor: 6894.757 },
+      { value: "atm", label: "Standard Atmospheres (atm)", factor: 101325 },
     ],
   },
 };
@@ -84,7 +141,6 @@ export function convertUnits(
 
   // Custom temperature handling
   if (category === "temperature") {
-    // 1. Convert from source to Celsius
     let celsiusVal = value;
     if (fromUnit === "f") {
       celsiusVal = ((value - 32) * 5) / 9;
@@ -92,7 +148,6 @@ export function convertUnits(
       celsiusVal = value - 273.15;
     }
 
-    // 2. Convert from Celsius to target
     if (toUnit === "c") {
       return celsiusVal;
     } else if (toUnit === "f") {
@@ -103,13 +158,11 @@ export function convertUnits(
     return 0;
   }
 
-  // Standard multiplicative conversion
   const fromCfg = cat.units.find((u) => u.value === fromUnit);
   const toCfg = cat.units.find((u) => u.value === toUnit);
 
   if (!fromCfg || !toCfg) return 0;
 
-  // Convert to base unit then to target
   const baseValue = value * fromCfg.factor;
   return baseValue / toCfg.factor;
 }

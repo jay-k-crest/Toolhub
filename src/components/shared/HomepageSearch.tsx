@@ -53,8 +53,7 @@ export default function HomepageSearch({ toolsUrl }: HomepageSearchProps) {
       <div className="relative">
         <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted" />
         <input
-          type="text"
-          placeholder="Search 60+ free tools (e.g. EMI, BMI, GPA, Percentage)..."
+          placeholder="Search 100+ free calculators & developer tools (e.g. AI Chat Exporter, EMI, JSON, BMI)..."
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -65,7 +64,7 @@ export default function HomepageSearch({ toolsUrl }: HomepageSearchProps) {
             setShowDropdown(true);
             void ensureToolsLoaded();
           }}
-          className="h-12 w-full rounded-lg border border-input bg-card pl-12 pr-4 text-base text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          className="h-13 w-full rounded-xl border border-input bg-card pl-12 pr-4 text-sm sm:text-base text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all"
         />
       </div>
 

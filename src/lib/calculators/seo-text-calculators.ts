@@ -143,118 +143,12 @@ export function checkMetaLength(title: string, desc: string): MetaLengthResult {
   };
 }
 
-// 5. AI Chat Exporter Parser
-export interface ChatMessage {
-  role: "user" | "assistant" | "system" | string;
-  text: string;
-}
+import { parseAIChatUniversal, type ChatMessage as ExportChatMessage } from "./ai-chat-exporter";
+
+export type ChatMessage = ExportChatMessage;
 
 export function parseAIChatHTML(htmlOrText: string): ChatMessage[] {
-  const messages: ChatMessage[] = [];
-
-  // 1. Try to parse as Next Data JSON (ChatGPT share style)
-  if (htmlOrText.includes("__NEXT_DATA__") || htmlOrText.trim().startsWith("{")) {
-    try {
-      let jsonStr = htmlOrText;
-      if (htmlOrText.includes("__NEXT_DATA__")) {
-        const match = htmlOrText.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-        jsonStr = match ? match[1] : htmlOrText;
-      }
-      
-      const nextData = JSON.parse(jsonStr.trim());
-      
-      const props = nextData.props || {};
-      const pageProps = props.pageProps || {};
-      const serverResponse = pageProps.serverResponse || {};
-      const conversation = serverResponse.data || pageProps.sharedConversationResponse || {};
-      const mapping = conversation.mapping || {};
-
-      const tempMsgs: Array<{ role: string; text: string; time: number }> = [];
-
-      for (const key in mapping) {
-        const node = mapping[key];
-        if (node.message && node.message.content && node.message.content.parts) {
-          const text = node.message.content.parts.join("\n").trim();
-          const role = node.message.author?.role || "unknown";
-          const time = node.message.create_time || 0;
-          if (text && (role === "user" || role === "assistant")) {
-            tempMsgs.push({ role, text, time });
-          }
-        }
-      }
-
-      if (tempMsgs.length > 0) {
-        tempMsgs.sort((a, b) => a.time - b.time);
-        return tempMsgs.map(m => ({ role: m.role, text: m.text }));
-      }
-    } catch (e) {
-      // Fallback
-    }
-  }
-
-  // 2. Try parsing plain text transcript regex patterns
-  const lines = htmlOrText.split("\n");
-  let currentRole: string | null = null;
-  let currentText: string[] = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    const match = line.match(/^(user|you|me|chatgpt|claude|xai|assistant|ai|system):\s*(.*)/i);
-    
-    if (match) {
-      if (currentRole && currentText.length > 0) {
-        messages.push({
-          role: ["you", "user", "me"].includes(currentRole.toLowerCase()) ? "user" : "assistant",
-          text: currentText.join("\n").trim(),
-        });
-      }
-      currentRole = match[1];
-      currentText = [match[2]];
-    } else {
-      if (currentRole) {
-        currentText.push(line);
-      }
-    }
-  }
-
-  if (currentRole && currentText.length > 0) {
-    messages.push({
-      role: ["you", "user", "me"].includes(currentRole.toLowerCase()) ? "user" : "assistant",
-      text: currentText.join("\n").trim(),
-    });
-  }
-
-  // 3. Fallback: Parse DOM if browser DOMParser is active
-  if (messages.length === 0 && typeof window !== "undefined") {
-    try {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlOrText, "text/html");
-      
-      // Look for standard chat bubble classes or data-testids
-      const userElements = doc.querySelectorAll("[class*='user-message'], [class*='font-user']");
-      const assistantElements = doc.querySelectorAll("[class*='assistant-message'], [class*='font-assistant']");
-      
-      if (userElements.length > 0 || assistantElements.length > 0) {
-        userElements.forEach(el => {
-          const txt = el.textContent?.trim();
-          if (txt) messages.push({ role: "user", text: txt });
-        });
-        assistantElements.forEach(el => {
-          const txt = el.textContent?.trim();
-          if (txt) messages.push({ role: "assistant", text: txt });
-        });
-        return messages;
-      }
-    } catch (e) {}
-  }
-
-  if (messages.length === 0 && htmlOrText.trim().length > 0) {
-    messages.push({
-      role: "user",
-      text: htmlOrText.trim(),
-    });
-  }
-
-  return messages;
+  const parsed = parseAIChatUniversal(htmlOrText);
+  return parsed.messages;
 }
 
