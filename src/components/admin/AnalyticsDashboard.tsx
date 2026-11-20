@@ -269,6 +269,29 @@ export default function AnalyticsDashboard({ dbData }: AnalyticsDashboardProps) 
     return { x, y };
   };
 
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (chartPoints.length === 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (!rect.width) return;
+    const svgX = ((e.clientX - rect.left) / rect.width) * chartWidth;
+    const segmentWidth = (chartWidth - paddingX * 2) / (chartPoints.length - 1 || 1);
+    const rawIndex = Math.round((svgX - paddingX) / segmentWidth);
+    const clampedIndex = Math.max(0, Math.min(chartPoints.length - 1, rawIndex));
+    setHoveredIndex(clampedIndex);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (chartPoints.length === 0 || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (!rect.width) return;
+    const svgX = ((touch.clientX - rect.left) / rect.width) * chartWidth;
+    const segmentWidth = (chartWidth - paddingX * 2) / (chartPoints.length - 1 || 1);
+    const rawIndex = Math.round((svgX - paddingX) / segmentWidth);
+    const clampedIndex = Math.max(0, Math.min(chartPoints.length - 1, rawIndex));
+    setHoveredIndex(clampedIndex);
+  };
+
   // Build SVG Paths
   let pathD = "";
   let areaD = "";
@@ -310,7 +333,10 @@ export default function AnalyticsDashboard({ dbData }: AnalyticsDashboardProps) 
 
         <div className="inline-flex rounded-lg border border-border bg-background p-1 shrink-0">
           <button
-            onClick={() => setTimeframe("7d")}
+            onClick={() => {
+              setTimeframe("7d");
+              setHoveredIndex(null);
+            }}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
               timeframe === "7d" ? "bg-primary text-primary-foreground shadow" : "text-muted hover:text-foreground"
             }`}
@@ -318,7 +344,10 @@ export default function AnalyticsDashboard({ dbData }: AnalyticsDashboardProps) 
             7 Days
           </button>
           <button
-            onClick={() => setTimeframe("30d")}
+            onClick={() => {
+              setTimeframe("30d");
+              setHoveredIndex(null);
+            }}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
               timeframe === "30d" ? "bg-primary text-primary-foreground shadow" : "text-muted hover:text-foreground"
             }`}
@@ -326,7 +355,10 @@ export default function AnalyticsDashboard({ dbData }: AnalyticsDashboardProps) 
             30 Days
           </button>
           <button
-            onClick={() => setTimeframe("90d")}
+            onClick={() => {
+              setTimeframe("90d");
+              setHoveredIndex(null);
+            }}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
               timeframe === "90d" ? "bg-primary text-primary-foreground shadow" : "text-muted hover:text-foreground"
             }`}
@@ -445,8 +477,19 @@ export default function AnalyticsDashboard({ dbData }: AnalyticsDashboardProps) 
             </div>
 
             {/* SVG line chart */}
-            <div className="relative mt-8 h-[220px]">
-              <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-full overflow-visible">
+            <div
+              className="relative mt-8 h-[220px]"
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <svg
+                viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+                className="w-full h-full overflow-visible select-none cursor-pointer"
+                style={{ pointerEvents: "all" }}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={() => setHoveredIndex(null)}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={() => setHoveredIndex(null)}
+              >
                 <defs>
                   <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.15" />
@@ -455,73 +498,148 @@ export default function AnalyticsDashboard({ dbData }: AnalyticsDashboardProps) 
                 </defs>
 
                 {/* Gridlines */}
-                <line x1={paddingX} y1={paddingY} x2={chartWidth - paddingX} y2={paddingY} stroke="currentColor" className="text-border/40" strokeDasharray="3" />
-                <line x1={paddingX} y1={chartHeight / 2} x2={chartWidth - paddingX} y2={chartHeight / 2} stroke="currentColor" className="text-border/40" strokeDasharray="3" />
-                <line x1={paddingX} y1={chartHeight - paddingY} x2={chartWidth - paddingX} y2={chartHeight - paddingY} stroke="currentColor" className="text-border" />
+                <line x1={paddingX} y1={paddingY} x2={chartWidth - paddingX} y2={paddingY} stroke="currentColor" className="text-border/40 pointer-events-none" strokeDasharray="3" />
+                <line x1={paddingX} y1={chartHeight / 2} x2={chartWidth - paddingX} y2={chartHeight / 2} stroke="currentColor" className="text-border/40 pointer-events-none" strokeDasharray="3" />
+                <line x1={paddingX} y1={chartHeight - paddingY} x2={chartWidth - paddingX} y2={chartHeight - paddingY} stroke="currentColor" className="text-border pointer-events-none" />
 
                 {/* Gradient area */}
-                {areaD && <path d={areaD} fill="url(#areaGrad)" className="transition-all duration-300" />}
+                {areaD && <path d={areaD} fill="url(#areaGrad)" className="transition-all duration-300 pointer-events-none" />}
 
                 {/* Total Traffic Line */}
-                {pathD && <path d={pathD} fill="none" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" className="transition-all duration-300" />}
+                {pathD && <path d={pathD} fill="none" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" className="transition-all duration-300 pointer-events-none" />}
 
                 {/* New Visitors Line */}
-                {newVisitorPathD && <path d={newVisitorPathD} fill="none" stroke="var(--primary)" className="opacity-40 transition-all duration-300" strokeWidth="2" strokeDasharray="4 2" />}
+                {newVisitorPathD && <path d={newVisitorPathD} fill="none" stroke="var(--primary)" className="opacity-40 transition-all duration-300 pointer-events-none" strokeWidth="2" strokeDasharray="4 2" />}
 
-                {/* Interactive circles */}
+                {/* Vertical guideline crosshair when hovered */}
+                {hoveredIndex !== null && chartPoints[hoveredIndex] && (
+                  <line
+                    x1={getCoordinates(hoveredIndex, 0).x}
+                    y1={paddingY}
+                    x2={getCoordinates(hoveredIndex, 0).x}
+                    y2={chartHeight - paddingY}
+                    stroke="var(--primary)"
+                    strokeWidth="1.5"
+                    strokeDasharray="3 3"
+                    className="opacity-40 pointer-events-none"
+                  />
+                )}
+
+                {/* Visual points & labels */}
                 {chartPoints.map((point, idx) => {
                   const total = point.newVisitors + point.returningVisitors;
                   const { x, y } = getCoordinates(idx, total);
+                  const { y: ny } = getCoordinates(idx, point.newVisitors);
                   const isHovered = hoveredIndex === idx;
 
                   return (
-                    <g key={idx} className="cursor-pointer">
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r="14"
-                        fill="transparent"
-                        onMouseEnter={() => setHoveredIndex(idx)}
-                        onMouseLeave={() => setHoveredIndex(null)}
-                      />
+                    <g key={idx} className="pointer-events-none">
+                      {/* Pulse halo on active point */}
+                      {isHovered && (
+                        <circle
+                          cx={x}
+                          cy={y}
+                          r="10"
+                          fill="var(--primary)"
+                          className="opacity-25 animate-pulse"
+                        />
+                      )}
+                      {/* Total traffic circle */}
                       <circle
                         cx={x}
                         cy={y}
                         r={isHovered ? "6" : "4"}
                         fill="var(--primary)"
                         stroke="var(--card)"
-                        strokeWidth="2"
+                        strokeWidth={isHovered ? "2.5" : "2"}
                         className="transition-all duration-150 shadow"
                       />
-                      <text x={x} y={chartHeight - 4} textAnchor="middle" className="text-[9px] font-bold fill-muted">
+                      {/* New visitors circle when hovered */}
+                      {isHovered && (
+                        <circle
+                          cx={x}
+                          cy={ny}
+                          r="4"
+                          fill="var(--primary)"
+                          stroke="var(--card)"
+                          strokeWidth="1.5"
+                          className="opacity-60 transition-all duration-150"
+                        />
+                      )}
+                      {/* Date label */}
+                      <text
+                        x={x}
+                        y={chartHeight - 4}
+                        textAnchor="middle"
+                        className={`transition-colors duration-150 font-bold ${
+                          isHovered ? "text-[10px] fill-primary" : "text-[9px] fill-muted"
+                        }`}
+                      >
                         {point.label}
                       </text>
                     </g>
                   );
                 })}
+
+                {/* Interactive full-height hit test columns */}
+                {chartPoints.map((_, idx) => {
+                  const segmentWidth = (chartWidth - paddingX * 2) / (chartPoints.length - 1 || 1);
+                  const x = paddingX + idx * segmentWidth;
+                  const colX = idx === 0 ? 0 : x - segmentWidth / 2;
+                  const colW =
+                    idx === 0
+                      ? paddingX + segmentWidth / 2
+                      : idx === chartPoints.length - 1
+                      ? chartWidth - (x - segmentWidth / 2)
+                      : segmentWidth;
+
+                  return (
+                    <rect
+                      key={`hit-col-${idx}`}
+                      x={colX}
+                      y={0}
+                      width={colW}
+                      height={chartHeight}
+                      fill="transparent"
+                      className="cursor-pointer"
+                      style={{ pointerEvents: "all" }}
+                      onMouseEnter={() => setHoveredIndex(idx)}
+                    />
+                  );
+                })}
               </svg>
 
               {/* Tooltip Overlay */}
-              {hoveredIndex !== null && (
+              {hoveredIndex !== null && chartPoints[hoveredIndex] && (
                 <div
-                  className="absolute z-10 bg-slate-900 border border-slate-800 text-white rounded-lg p-3 shadow-xl text-xs space-y-1 transition-all"
+                  className="pointer-events-none select-none absolute z-20 bg-slate-900/95 backdrop-blur-sm border border-slate-700/80 text-white rounded-lg p-3 shadow-xl text-xs space-y-1 transition-[left,transform] duration-150 ease-out"
                   style={{
-                    left: `${(hoveredIndex / (chartPoints.length - 1 || 1)) * 75 + 10}%`,
+                    left: `${(getCoordinates(hoveredIndex, 0).x / chartWidth) * 100}%`,
                     top: "10px",
+                    transform:
+                      (getCoordinates(hoveredIndex, 0).x / chartWidth) * 100 < 25
+                        ? "translateX(0%)"
+                        : (getCoordinates(hoveredIndex, 0).x / chartWidth) * 100 > 75
+                        ? "translateX(-100%)"
+                        : "translateX(-50%)",
                   }}
                 >
                   <p className="font-semibold border-b border-slate-800 pb-1 text-slate-400">
                     {chartPoints[hoveredIndex].label} (Calculations: {chartPoints[hoveredIndex].executions.toLocaleString()})
                   </p>
                   <div className="flex justify-between gap-6 pt-1">
-                    <span>New Visitors:</span>
-                    <span className="font-bold tabular-nums">{chartPoints[hoveredIndex].newVisitors.toLocaleString()}</span>
+                    <span className="text-slate-300">New Visitors:</span>
+                    <span className="font-bold tabular-nums text-white">
+                      {chartPoints[hoveredIndex].newVisitors.toLocaleString()}
+                    </span>
                   </div>
                   <div className="flex justify-between gap-6">
-                    <span>Returning:</span>
-                    <span className="font-bold tabular-nums">{chartPoints[hoveredIndex].returningVisitors.toLocaleString()}</span>
+                    <span className="text-slate-300">Returning:</span>
+                    <span className="font-bold tabular-nums text-white">
+                      {chartPoints[hoveredIndex].returningVisitors.toLocaleString()}
+                    </span>
                   </div>
-                  <div className="flex justify-between gap-6 border-t border-slate-800/50 pt-1 font-semibold text-primary">
+                  <div className="flex justify-between gap-6 border-t border-slate-800/80 pt-1 font-semibold text-primary">
                     <span>Total:</span>
                     <span className="tabular-nums">
                       {(chartPoints[hoveredIndex].newVisitors + chartPoints[hoveredIndex].returningVisitors).toLocaleString()}
