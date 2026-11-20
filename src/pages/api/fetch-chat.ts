@@ -67,6 +67,35 @@ export const GET: APIRoute = async ({ request }) => {
       }
     }
 
+    // Special handler: If Claude share URL, attempt to fetch chat snapshot API
+    const claudeShareMatch = targetUrl.match(/claude\.ai\/share\/([a-zA-Z0-9_-]+)/);
+    if (claudeShareMatch && claudeShareMatch[1]) {
+      const shareId = claudeShareMatch[1];
+      const apiCandidates = [
+        `https://claude.ai/api/chat_snapshots/${shareId}?rendering_mode=messages&render_all_tools=true&renders_source_card=true&renders_tally_table_bars=true`,
+        `https://claude.ai/api/chat_snapshots/${shareId}`,
+      ];
+
+      for (const apiUrl of apiCandidates) {
+        try {
+          const apiRes = await fetch(apiUrl, {
+            headers: BROWSER_HEADERS,
+          });
+          if (apiRes.ok) {
+            const apiText = await apiRes.text();
+            if (apiText && (apiText.includes('"chat_messages"') || apiText.includes('"snapshot_name"') || apiText.includes('"conversation_uuid"'))) {
+              return new Response(JSON.stringify({ content: apiText }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+              });
+            }
+          }
+        } catch {
+          // Fall back to main page fetch
+        }
+      }
+    }
+
     const response = await fetch(targetUrl, {
       headers: BROWSER_HEADERS,
     });

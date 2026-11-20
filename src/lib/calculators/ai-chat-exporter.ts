@@ -224,9 +224,10 @@ function parseChatFromJSON(data: any): { messages: ChatMessage[]; title: string 
 
   // Case A: OpenAI linear_conversation array (from modern share API or RSC flight data)
   if (data.linear_conversation && Array.isArray(data.linear_conversation)) {
-    title = data.title || "ChatGPT Conversation";
+    title = data.snapshot_name || data.title || "ChatGPT Conversation";
     data.linear_conversation.forEach((item: any, idx: number) => {
       const msgObj = item.message || item;
+      if (msgObj.metadata?.is_visually_hidden_from_conversation) return;
       const role = normalizeRole(msgObj.author?.role || msgObj.role);
       let text = "";
       if (msgObj.content?.parts && Array.isArray(msgObj.content.parts)) {
@@ -253,12 +254,19 @@ function parseChatFromJSON(data: any): { messages: ChatMessage[]; title: string 
 
   // Case B: Anthropic / Claude export format with `chat_messages`
   if (data.chat_messages && Array.isArray(data.chat_messages)) {
-    title = data.name || data.title || "Claude Conversation";
+    title = data.snapshot_name || data.name || data.title || "Claude Conversation";
     data.chat_messages.forEach((item: any, idx: number) => {
       const role = normalizeRole(item.sender || item.role);
       let text = item.text || "";
       if (!text && Array.isArray(item.content)) {
-        text = item.content.map((c: any) => (typeof c === "string" ? c : c?.text || "")).filter(Boolean).join("\n");
+        text = item.content
+          .map((c: any) => {
+            if (typeof c === "string") return c;
+            if (c?.type === "text" && typeof c.text === "string") return c.text;
+            return c?.text || "";
+          })
+          .filter(Boolean)
+          .join("\n\n");
       }
       if (text && text.trim()) {
         messages.push({
@@ -279,13 +287,14 @@ function parseChatFromJSON(data: any): { messages: ChatMessage[]; title: string 
 
   // Case D: OpenAI conversations.json single object or mapping structure
   if (data.mapping && typeof data.mapping === "object") {
-    title = data.title || "ChatGPT Conversation";
+    title = data.snapshot_name || data.title || "ChatGPT Conversation";
     const mapping = data.mapping;
     const temp: Array<{ node: any; time: number; idx: number }> = [];
     let counter = 0;
 
     for (const key in mapping) {
       const node = mapping[key];
+      if (node?.message?.metadata?.is_visually_hidden_from_conversation) continue;
       if (node?.message?.content?.parts) {
         const text = node.message.content.parts.filter((p: any) => typeof p === "string").join("\n").trim();
         const role = normalizeRole(node.message.author?.role);
@@ -331,7 +340,7 @@ function parseChatFromJSON(data: any): { messages: ChatMessage[]; title: string 
   // Case F: Standard wrapper { title, messages: [...] } or { chat: [...] } or { conversation: [...] }
   const messageList = data.messages || data.conversation || data.chat || data.history || data.data;
   if (Array.isArray(messageList)) {
-    title = data.title || data.name || title;
+    title = data.snapshot_name || data.title || data.name || title;
     messageList.forEach((item, idx) => {
       if (!item || typeof item !== "object") return;
       const role = normalizeRole(item.role || item.author || item.sender || (idx % 2 === 0 ? "user" : "assistant"));

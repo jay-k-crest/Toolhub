@@ -160,23 +160,7 @@ export default function DeveloperAiCalculators({ slug }: DeveloperAiProps) {
       return;
     }
 
-    // ChatGPT and Claude share pages are protected by Cloudflare — any proxy
-    // fetch will return a bot-challenge page, not the real conversation.
-    // Skip the fetch and guide the user to paste manually.
-    const isChatGPT = linkTrimmed.includes("chatgpt.com") || linkTrimmed.includes("chat.openai.com");
-    const isClaude = linkTrimmed.includes("claude.ai");
-
-    if (isChatGPT || isClaude) {
-      const platform = isChatGPT ? "ChatGPT" : "Claude";
-      setParseError(
-        `${platform} share pages are protected by Cloudflare and cannot be fetched directly. ` +
-        `Open the link, select all text (Ctrl+A / Cmd+A), copy (Ctrl+C), then paste it into the text box below and click Parse again.`
-      );
-      setIsParsing(false);
-      return;
-    }
-
-    // For other links, attempt fetch via our server-side proxy
+    // Attempt fetch via server-side proxy
     setIsFetchingLink(true);
     try {
       const fetched = await fetchUrlContent(linkTrimmed);
@@ -402,31 +386,6 @@ console.log(greeting);
                   placeholder="https://chatgpt.com/share/... or https://claude.ai/share/..."
                   className="w-full rounded-lg border border-input bg-card px-3.5 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
-
-                {/* Cloudflare-protection notice for ChatGPT / Claude */}
-                {chatLink.trim().length > 10 && (chatLink.includes("claude.ai") || chatLink.includes("chatgpt.com") || chatLink.includes("chat.openai.com")) && (
-                  <div className="p-3 bg-amber-500/8 border border-amber-500/25 rounded-xl text-xs space-y-2">
-                    <p className="text-foreground font-semibold flex items-center gap-1.5">
-                      ⚠️ {chatLink.includes("claude.ai") ? "Claude" : "ChatGPT"} blocks automated access (Cloudflare)
-                    </p>
-                    <p className="text-muted leading-relaxed">
-                      Paste the conversation text below instead — it takes 3 steps:
-                    </p>
-                    <ol className="text-muted leading-relaxed list-none space-y-1 pl-1">
-                      <li><span className="font-bold text-foreground">1.</span> Open the link →</li>
-                      <li><span className="font-bold text-foreground">2.</span> Select all text <kbd className="px-1 py-0.5 bg-secondary border border-border rounded text-[10px]">Ctrl+A</kbd> then copy <kbd className="px-1 py-0.5 bg-secondary border border-border rounded text-[10px]">Ctrl+C</kbd></li>
-                      <li><span className="font-bold text-foreground">3.</span> Paste into the box below <kbd className="px-1 py-0.5 bg-secondary border border-border rounded text-[10px]">Ctrl+V</kbd> → click Parse</li>
-                    </ol>
-                    <a
-                      href={chatLink.trim()}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-border bg-card hover:bg-secondary text-xs font-semibold text-foreground mt-1"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" /> Open Chat Page →
-                    </a>
-                  </div>
-                )}
               </div>
 
               {/* Raw Content Textarea */}
