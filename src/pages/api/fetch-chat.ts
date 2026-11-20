@@ -27,7 +27,21 @@ export const GET: APIRoute = async ({ request }) => {
   }
 
   try {
-    const parsed = new URL(targetUrl);
+    let urlToFetch = targetUrl.trim();
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(urlToFetch)) {
+      urlToFetch = `https://${urlToFetch}`;
+    }
+
+    let parsed: URL;
+    try {
+      parsed = new URL(urlToFetch);
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid URL" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     if (!["http:", "https:"].includes(parsed.protocol)) {
       return new Response(JSON.stringify({ error: "Invalid protocol" }), {
         status: 400,
@@ -36,7 +50,7 @@ export const GET: APIRoute = async ({ request }) => {
     }
 
     // Special handler: If ChatGPT share URL, first attempt to fetch the backend share API
-    const chatGptShareMatch = targetUrl.match(/(?:chatgpt\.com|chat\.openai\.com)\/share\/([a-zA-Z0-9_-]+)/);
+    const chatGptShareMatch = urlToFetch.match(/(?:chatgpt\.com|chat\.openai\.com)\/share\/([a-zA-Z0-9_-]+)/);
     if (chatGptShareMatch && chatGptShareMatch[1]) {
       const shareId = chatGptShareMatch[1];
       const apiCandidates = [
@@ -68,7 +82,7 @@ export const GET: APIRoute = async ({ request }) => {
     }
 
     // Special handler: If Claude share URL, attempt to fetch chat snapshot API
-    const claudeShareMatch = targetUrl.match(/claude\.ai\/share\/([a-zA-Z0-9_-]+)/);
+    const claudeShareMatch = urlToFetch.match(/claude\.ai\/share\/([a-zA-Z0-9_-]+)/);
     if (claudeShareMatch && claudeShareMatch[1]) {
       const shareId = claudeShareMatch[1];
       const apiCandidates = [
@@ -96,7 +110,7 @@ export const GET: APIRoute = async ({ request }) => {
       }
     }
 
-    const response = await fetch(targetUrl, {
+    const response = await fetch(urlToFetch, {
       headers: BROWSER_HEADERS,
     });
 

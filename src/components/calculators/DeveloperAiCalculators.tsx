@@ -153,11 +153,15 @@ export default function DeveloperAiCalculators({ slug }: DeveloperAiProps) {
       return;
     }
 
-    const linkTrimmed = chatLink.trim();
+    let linkTrimmed = chatLink.trim();
     if (!linkTrimmed) {
       setParseError("Please enter a shared link above or paste your chat transcript into the text box below.");
       setIsParsing(false);
       return;
+    }
+
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(linkTrimmed)) {
+      linkTrimmed = `https://${linkTrimmed}`;
     }
 
     // Attempt fetch via server-side proxy

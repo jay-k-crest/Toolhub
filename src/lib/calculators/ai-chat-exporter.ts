@@ -228,7 +228,10 @@ function parseChatFromJSON(data: any): { messages: ChatMessage[]; title: string 
     data.linear_conversation.forEach((item: any, idx: number) => {
       const msgObj = item.message || item;
       if (msgObj.metadata?.is_visually_hidden_from_conversation) return;
-      const role = normalizeRole(msgObj.author?.role || msgObj.role);
+      const rawRole = msgObj.author?.role || msgObj.role;
+      if (rawRole === "tool") return;
+      const role = normalizeRole(rawRole);
+      if (role === "tool") return;
       let text = "";
       if (msgObj.content?.parts && Array.isArray(msgObj.content.parts)) {
         text = msgObj.content.parts.filter((p: any) => typeof p === "string").join("\n").trim();
@@ -257,13 +260,14 @@ function parseChatFromJSON(data: any): { messages: ChatMessage[]; title: string 
     title = data.snapshot_name || data.name || data.title || "Claude Conversation";
     data.chat_messages.forEach((item: any, idx: number) => {
       const role = normalizeRole(item.sender || item.role);
-      let text = item.text || "";
+      let text = typeof item.text === "string" ? item.text.trim() : "";
       if (!text && Array.isArray(item.content)) {
         text = item.content
           .map((c: any) => {
             if (typeof c === "string") return c;
             if (c?.type === "text" && typeof c.text === "string") return c.text;
-            return c?.text || "";
+            if (c && typeof c === "object" && typeof c.text === "string") return c.text;
+            return "";
           })
           .filter(Boolean)
           .join("\n\n");
